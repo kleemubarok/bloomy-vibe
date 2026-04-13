@@ -1,0 +1,20 @@
+# Bun
+node_modules
+bun.lock
+
+# SvelteKit
+.svelte-kit
+.vercel
+.netlify
+build
+
+# Wrangler (Cloudflare)
+.wrangler
+
+# OS
+.DS_Store
+
+# Local env
+.env
+.env.*
+!.env.example

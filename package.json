@@ -1,0 +1,16 @@
+{
+  "name": "bloom-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter \"*\" dev",
+    "build": "bun run --filter \"*\" build",
+    "deploy": "bun run --filter \"*\" deploy"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
