@@ -1,6 +1,6 @@
 name = "bloom-api"
 main = "src/index.ts"
-compatibility_date = "2026-04-15"
+compatibility_date = "2025-01-01"
 
 [[d1_databases]]
 binding = "DB"
