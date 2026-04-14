@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #fb7185;
+  --color-primary-light: #fff1f2;
+  --color-primary-dark: #e11d48;
+  
+  --color-secondary: #fbcfe8;
+  --color-accent: #db2777;
+  
+  --color-background: #ffffff;
+  --color-surface: #fff1f2;
+  
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-zinc-900 font-sans antialiased;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20;
+  }
+  
+  .glass-dark {
+    @apply bg-black/20 backdrop-blur-md border border-white/10;
+  }
+  
+  .btn-girly {
+    @apply px-4 py-2 rounded-full font-medium transition-all active:scale-95;
+    @apply bg-rose-400 text-white shadow-lg shadow-rose-200 hover:bg-rose-500;
+  }
+}
+
+/* Custom Gradients */
+.bg-mesh {
+  background-color: #ffffff;
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(353,100%,96%,1) 0, transparent 50%), 
+    radial-gradient(at 50% 0%, hsla(341,100%,94%,1) 0, transparent 50%), 
+    radial-gradient(at 100% 0%, hsla(320,100%,92%,1) 0, transparent 50%);
+}

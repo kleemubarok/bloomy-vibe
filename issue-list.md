@@ -20,16 +20,16 @@
 ## 📦 Phase 1: Setup & Infrastruktur Dasar
 | ID | Judul | Scope | Key Files | Acceptance Criteria | Dependencies |
 |:---|:---|:---|:---|:---|:---|
-| `#1` | **Project Init & Config Stack** | Inisialisasi repo Bun, setup SvelteKit, Hono, Drizzle. Konfigurasi env & alias DB (SQLite dev ↔ D1 prod). | `package.json`, `svelte.config.js`, `drizzle.config.ts`, `wrangler.toml` | `bun dev` menjalankan SvelteKit + API proxy. `drizzle-kit generate` berjalan tanpa error. Env vars terpisah jelas (`DEV`/`PROD`). | - |
-| `#2` | **PWA Shell & Base Layout** | Setup `@vite-pwa/sveltekit`, routing dasar, global state mock (auth, theme, online/offline status). | `src/app.html`, `src/routes/+layout.svelte`, `src/lib/stores/app.ts` | App bisa di-install sebagai PWA. Layout responsive siap dipakai. Indikator offline muncul otomatis. | `#1` |
+| `#1` | **Project Init & Config Stack** | Inisialisasi repo Bun, setup SvelteKit, Hono, Drizzle. Konfigurasi env & alias DB (SQLite dev ↔ D1 prod). | `package.json`, `svelte.config.js`, `drizzle.config.ts`, `wrangler.toml` | `bun dev` menjalankan SvelteKit + API proxy. `drizzle-kit generate` berjalan tanpa error. Env vars terpisah jelas (`DEV`/`PROD`). | ✅ |
+| `#2` | **PWA Shell & Base Layout** | Setup `@vite-pwa/sveltekit`, routing dasar, global state mock (auth, theme, online/offline status). | `src/app.html`, `src/routes/+layout.svelte`, `src/lib/stores/app.ts` | App bisa di-install sebagai PWA. Layout responsive siap dipakai. Indikator offline muncul otomatis. | `#1` | ✅ |
 
 ---
 
 ## 📦 Phase 2: Database & Schema
 | ID | Judul | Scope | Key Files | Acceptance Criteria | Dependencies |
 |:---|:---|:---|:---|:---|:---|
-| `#3` | **Drizzle Schema & Migrations** | Definisikan tabel: `users`, `inventory`, `products`, `product_recipes`, `orders`, `order_items`, `payments`, `inventory_log`, `sync_queue`. Tambah index strategis. | `src/db/schema/`, `drizzle/migrations/` | Semua tabel & relasi terdefinisi. `drizzle-kit push` berhasil di SQLite & D1. Schema konsisten dengan konteks v2. | `#1` |
-| `#4` | **Seed Data & Validasi Local** | Script seed untuk dummy user, 5 produk + resep bahan, stok awal. Validasi query relasi & constraint. | `scripts/seed.ts`, `drizzle/seed.ts` | DB lokal terisi data realistis. Query Drizzle bisa join `products` ↔ `recipes` ↔ `inventory` tanpa error. | `#3` |
+| `#3` | **Drizzle Schema & Migrations** | Definisikan tabel: `users`, `inventory`, `products`, `product_recipes`, `orders`, `order_items`, `payments`, `inventory_log`, `sync_queue`. Tambah index strategis. | `src/db/schema/`, `drizzle/migrations/` | Semua tabel & relasi terdefinisi. `drizzle-kit push` berhasil di SQLite & D1. Schema konsisten dengan konteks v2. | `#1` | ✅ |
+| `#4` | **Seed Data & Validasi Local** | Script seed untuk dummy user, 5 produk + resep bahan, stok awal. Validasi query relasi & constraint. | `scripts/seed.ts`, `drizzle/seed.ts` | DB lokal terisi data realistis. Query Drizzle bisa join `products` ↔ `recipes` ↔ `inventory` tanpa error. | `#3` | ✅ |
 
 ---
 

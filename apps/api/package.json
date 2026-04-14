@@ -8,11 +8,14 @@
     "build": "echo 'No build step for Hono Cloudflare Worker'",
     "deploy": "wrangler deploy",
     "db:generate": "drizzle-kit generate",
+    "db:seed": "bun src/db/seed.ts",
     "db:push": "drizzle-kit push"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260413.1",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/bun": "latest",
+    "better-sqlite3": "^12.9.0",
     "drizzle-kit": "^0.31.10",
     "wrangler": "^4.82.1"
   },
@@ -21,6 +24,7 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.12"
+    "hono": "^4.12.12",
+    "uuidv7": "^1.2.1"
   }
 }

@@ -1,0 +1,24 @@
+# Tasks: Drizzle Schema & Migrations (Issue #3)
+
+- [x] Research & Setup
+    - [x] Create feature branch `feat/issue-3-db-schema`
+    - [x] Install dependencies (`uuidv7`)
+- [x] Schema Implementation (`apps/api/src/db/schema.ts`)
+    - [x] `users` table (Review & Update)
+    - [x] `inventory` table (Soft Delete enabled)
+    - [x] `products` table (Soft Delete enabled)
+    - [x] `product_recipes` table
+    - [x] `orders` table (UUIDv7, HPP snapshot)
+    - [x] `order_items` table
+    - [x] `payments` table
+    - [x] `inventory_log` table
+    - [x] `sync_queue` table (UUIDv7)
+- [x] Strategic Indices & Relations
+- [x] Helper Implementation
+    - [x] API-side date helper
+    - [x] Frontend-side date helper (+7 Jakarta)
+- [x] Migration Generation
+    - [x] Run `bunx drizzle-kit generate`
+    - [x] Inspect generated SQL for D1 compatibility
+- [x] Documentation
+    - [x] Save implementation plan, task list, and walkthrough to `docs/issue-3/`

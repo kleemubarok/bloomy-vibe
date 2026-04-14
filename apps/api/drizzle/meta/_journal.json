@@ -8,6 +8,20 @@
       "when": 1776095363532,
       "tag": "0000_harsh_odin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1776193164244,
+      "tag": "0001_fine_harry_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1776201360990,
+      "tag": "0002_rich_rachel_grey",
+      "breakpoints": true
     }
   ]
 }
