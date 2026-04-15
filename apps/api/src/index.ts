@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import auth from './routes/auth';
 import inventory from './routes/inventory';
 import products from './routes/products';
+import orders from './routes/orders';
 import { verifyAuth, requireRole } from './middleware/guard';
 import { getDb } from './db/client';
 
@@ -24,6 +25,9 @@ app.route('/api/auth', auth);
 // Master Data Routes
 app.route('/api/inventory', inventory);
 app.route('/api/products', products);
+
+// Order Routes
+app.route('/api/orders', orders);
 
 // Public Health Check
 app.get('/api/health', (c) => {

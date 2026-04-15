@@ -61,7 +61,7 @@ export const orders = sqliteTable('orders', {
   id: text('id').primaryKey().$defaultFn(() => uuidv7()),
   customerName: text('customer_name').notNull(),
   customerWhatsapp: text('customer_whatsapp'),
-  totalAmount: integer('total_amount').notNull(),
+  totalAmount: integer('total_amount').notNull().default(0),
   discountAmount: integer('discount_amount').notNull().default(0),
   status: text('status', { enum: ['Draft', 'Antri', 'Dirangkai', 'Selesai', 'Diambil', 'Dikirim', 'Batal'] }).notNull().default('Antri'),
   paymentStatus: text('payment_status', { enum: ['Pending', 'Paid', 'Partial', 'Refunded'] }).notNull().default('Pending'),
