@@ -128,6 +128,20 @@ export const syncQueue = sqliteTable('sync_queue', {
   statusIdx: index('sync_queue_status_idx').on(table.status),
 }));
 
+export const selfOrderLinks = sqliteTable('self_order_links', {
+  id: text('id').primaryKey().$defaultFn(() => uuidv7()),
+  uuid: text('uuid').notNull().unique(),
+  productId: integer('product_id').notNull().references(() => products.id),
+  customerName: text('customer_name').notNull(),
+  quantity: integer('quantity').notNull().default(1),
+  isUsed: integer('is_used', { mode: 'boolean' }).notNull().default(false),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
+}, (table) => ({
+  uuidIdx: index('self_order_links_uuid_idx').on(table.uuid),
+}));
+
 export const refreshTokens = sqliteTable('refresh_tokens', {
   id: text('id').primaryKey().$defaultFn(() => uuidv7()),
   userId: integer('user_id').notNull().references(() => users.id),

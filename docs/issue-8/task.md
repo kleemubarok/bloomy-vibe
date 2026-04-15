@@ -1,0 +1,30 @@
+# Tasks: Secure Self-Order Link Handler (Issue #8)
+
+- [x] Add `self_order_links` table to schema
+  - [x] uuid (unique)
+  - [x] productId (ref)
+  - [x] customerName
+  - [x] quantity
+  - [x] isUsed (boolean)
+  - [x] expiresAt
+  - [x] createdBy (user ref)
+- [x] Push schema to DB
+- [x] Create `apps/api/src/routes/self-order.ts`
+  - [x] POST /generate (auth required)
+  - [x] GET /:uuid/validate (public)
+  - [x] POST /:uuid (public - auto-hold)
+  - [x] POST /:id/cancel (auth required)
+- [x] Register route in `apps/api/src/index.ts`
+- [x] Create `apps/api/src/routes/self-order.test.ts`
+  - [x] Test generate link
+  - [x] Test validate link
+  - [x] Test submit order
+  - [x] Test cancel & stock return
+- [x] Execute & Verify
+  - [x] Run `bun test src/routes/self-order.test.ts` (10 tests pass)
+  - [x] Verify all tests pass
+- [x] Documentation
+  - [x] Save plan, task list, and walkthrough to `docs/issue-8/`
+- [x] Commit & Merge
+  - [x] Commit to `feature/issue-8-self-order`
+  - [x] Merge to `main`
