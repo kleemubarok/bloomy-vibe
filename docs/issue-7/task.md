@@ -1,0 +1,30 @@
+# Tasks: Order Lifecycle & Checkout Logic (Issue #7)
+
+- [x] Create `apps/api/src/lib/calc.ts`
+  - [x] `calculateHpp()` - kalkulasi HPP per item
+  - [x] `validateStock()` - validasi stok tersedia
+- [x] Create `apps/api/src/routes/orders.ts`
+  - [x] `GET /api/orders` - list orders
+  - [x] `POST /api/orders` - create draft order
+  - [x] `GET /api/orders/:id` - get order with items
+  - [x] `PATCH /api/orders/:id` - update order
+  - [x] `POST /api/orders/:id/hold` - soft-hold to Antri
+  - [x] `POST /api/orders/:id/checkout` - checkout with idempotency
+  - [x] `DELETE /api/orders/:id` - cancel order
+- [x] Modify `apps/api/src/db/schema.ts`
+  - [x] `orders.totalAmount` add `.default(0)`
+- [x] Modify `apps/api/src/index.ts`
+  - [x] Register `/api/orders` route
+- [x] Create `apps/api/src/routes/orders.test.ts`
+  - [x] Test create draft order
+  - [x] Test soft-hold
+  - [x] Test idempotency
+  - [x] Test inventory deduction & logging
+- [x] Execute & Verify
+  - [x] Run `bun test src/routes/orders.test.ts` (10 tests pass)
+  - [x] Verify all endpoints work correctly
+- [x] Documentation
+  - [x] Save plan, task list, and walkthrough to `docs/issue-7/`
+- [x] Commit & Merge
+  - [x] Commit to `feature/issue-7-order-lifecycle`
+  - [x] Merge to `main`
