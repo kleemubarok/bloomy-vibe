@@ -6,3 +6,4 @@ compatibility_date = "2025-01-01"
 binding = "DB"
 database_name = "bloom-db"
 database_id = "00000000-0000-0000-0000-000000000000" # Placeholder ID
+migrations_dir = "drizzle"

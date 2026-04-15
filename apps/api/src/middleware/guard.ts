@@ -7,6 +7,7 @@ const JWT_SECRET = 'bloomy-vibe-secret-change-me-in-prod';
 export const verifyAuth = (c: Context, next: Next) => {
   return jwt({
     secret: JWT_SECRET,
+    alg: 'HS256'
   })(c, next);
 };
 
