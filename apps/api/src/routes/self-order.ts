@@ -3,12 +3,9 @@ import { eq } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
 import * as schema from '../db/schema';
 import { getDb, type Bindings } from '../db/client';
-import { db as localDb } from '../db/local';
 import { verifyAuth, requireRole } from '../middleware/guard';
 import { validateStock } from '../lib/calc';
 import { uuidv7 } from 'uuidv7';
-
-type DbType = typeof localDb;
 
 function generateUuid(): string {
   return uuidv7();
