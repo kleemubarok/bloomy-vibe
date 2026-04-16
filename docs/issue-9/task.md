@@ -1,0 +1,32 @@
+# Tasks: Sync Queue Endpoint (Issue #9)
+
+- [x] Create `apps/api/src/lib/merge.ts`
+  - [x] `SyncOperation` type definition
+  - [x] `SyncResult` type definition
+  - [x] `processBatchSync()` - Main batch processor
+  - [x] `processSyncOperation()` - Per-entity dispatcher
+  - [x] Order sync handlers (INSERT/UPDATE/DELETE)
+  - [x] OrderItem sync handlers (INSERT/UPDATE/DELETE)
+  - [x] Payment sync handlers (INSERT/UPDATE)
+- [x] Create `apps/api/src/routes/sync.ts`
+  - [x] POST `/api/sync` endpoint
+  - [x] Auth middleware
+  - [x] Validate operations array
+- [x] Register route in `apps/api/src/index.ts`
+- [x] Create `apps/api/src/routes/sync.test.ts`
+  - [x] Test reject without auth
+  - [x] Test empty operations
+  - [x] Test INSERT order
+  - [x] Test UPDATE order
+  - [x] Test partial sync (mixed success/failure)
+  - [x] Test INSERT order item
+  - [x] Test INSERT payment
+  - [x] Test batch multiple operations
+- [x] Execute & Verify
+  - [x] Run `bun test src/routes/sync.test.ts` (9 tests pass)
+  - [x] Run all tests (32 pass)
+- [x] Documentation
+  - [x] Save plan, task list, and walkthrough to `docs/issue-9/`
+- [x] Commit & Merge
+  - [x] Commit to `feature/issue-9-sync-queue`
+  - [x] Merge to `main`

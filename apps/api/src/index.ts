@@ -5,6 +5,7 @@ import inventory from './routes/inventory';
 import products from './routes/products';
 import orders from './routes/orders';
 import selfOrder from './routes/self-order';
+import sync from './routes/sync';
 import { verifyAuth, requireRole } from './middleware/guard';
 import { getDb } from './db/client';
 
@@ -32,6 +33,9 @@ app.route('/api/orders', orders);
 
 // Self-Order Routes
 app.route('/api/self-order', selfOrder);
+
+// Sync Routes
+app.route('/api/sync', sync);
 
 // Public Health Check
 app.get('/api/health', (c) => {
