@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "wrangler dev --port 3000",
+    "dev": "bun --bun src/dev.ts",
+    "dev:prod": "wrangler dev --port 3000",
     "build": "echo 'No build step for Hono Cloudflare Worker'",
     "deploy": "wrangler deploy",
     "db:generate": "drizzle-kit generate",

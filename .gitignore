@@ -11,6 +11,9 @@ build
 # Wrangler (Cloudflare)
 .wrangler
 
+# Local development
+data/
+
 # OS
 .DS_Store
 

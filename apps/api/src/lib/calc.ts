@@ -1,4 +1,3 @@
-import { db } from '../db/local';
 import * as schema from '../db/schema';
 import { eq } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
