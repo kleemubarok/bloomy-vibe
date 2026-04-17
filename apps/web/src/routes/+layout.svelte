@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import { appState } from '$lib/stores/app.svelte';
-	import { Home, ShoppingCart, Package, History, User, WifiOff, Bell, LogOut } from 'lucide-svelte';
+	import { Home, ShoppingCart, Package, History, User, WifiOff, Bell, LogOut, Link } from 'lucide-svelte';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { isAuthenticated, logout } from '$lib/api/client';
@@ -12,6 +12,7 @@
 	const navItems = [
 		{ name: 'Dashboard', icon: Home, href: '/dashboard' },
 		{ name: 'POS', icon: ShoppingCart, href: '/pos' },
+		{ name: 'Self-Order', icon: Link, href: '/self-order' },
 		{ name: 'Inventory', icon: Package, href: '/inventory' },
 		{ name: 'Riwayat', icon: History, href: '/audit' }
 	];

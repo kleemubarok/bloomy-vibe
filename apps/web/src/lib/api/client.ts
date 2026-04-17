@@ -254,3 +254,88 @@ export async function recordPayment(data: {
 
 	return res.json();
 }
+
+export interface SelfOrderLink {
+	uuid: string;
+	link: string;
+	expiresAt: string;
+}
+
+export interface SelfOrderValidation {
+	valid: boolean;
+	product?: {
+		id: number;
+		name: string;
+		basePrice: number;
+		category: string;
+	};
+	customerName?: string;
+	quantity?: number;
+	expiresAt?: string;
+	reason?: 'expired' | 'used' | 'not_found';
+}
+
+export interface SelfOrderSubmitData {
+	messageCard?: string;
+	senderName?: string;
+	deliveryDate?: string;
+	customerWhatsapp?: string;
+}
+
+export async function generateSelfOrderLink(data: {
+	productId: number;
+	quantity: number;
+	customerName: string;
+}): Promise<SelfOrderLink> {
+	const res = await fetchWithAuth('/self-order/generate', {
+		method: 'POST',
+		body: JSON.stringify(data)
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to generate link' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to generate link');
+	}
+
+	return res.json();
+}
+
+export async function validateSelfOrderLink(uuid: string): Promise<SelfOrderValidation> {
+	const res = await fetch(`/api/self-order/${uuid}/validate`);
+
+	if (!res.ok) {
+		if (res.status === 404) {
+			return { valid: false, reason: 'not_found' };
+		}
+		if (res.status === 403) {
+			const data = await res.json();
+			return { valid: false, reason: data.reason || 'expired' };
+		}
+		throw new Error('Failed to validate link');
+	}
+
+	return res.json();
+}
+
+export async function submitSelfOrder(uuid: string, data: SelfOrderSubmitData): Promise<{
+	orderId: string;
+	message: string;
+	product: { name: string };
+}> {
+	const res = await fetch(`/api/self-order/${uuid}`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(data)
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to submit order' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to submit order');
+	}
+
+	return res.json();
+}
