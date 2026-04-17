@@ -1,6 +1,6 @@
-import type { Order, OrderItem } from './types';
+import type { Order, OrderItem, Product, CartItem } from './types';
 
-export type { Order, OrderItem };
+export type { Order, OrderItem, Product, CartItem };
 
 const API_BASE = '/api';
 
@@ -148,4 +148,74 @@ export function getStatusColor(status: Order['status']): string {
 	};
 
 	return colors[status] || 'bg-gray-100 text-gray-600';
+}
+
+export async function getProducts(): Promise<Product[]> {
+	const res = await fetchWithAuth('/products');
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to fetch products' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to fetch products');
+	}
+
+	return res.json();
+}
+
+export async function createOrder(data: {
+	customerName: string;
+	customerWhatsapp?: string;
+	items: { productId: number; quantity: number; unitPriceAtOrder: number }[];
+	orderType?: 'POS' | 'Self-Order';
+}): Promise<Order & { items: OrderItem[] }> {
+	const res = await fetchWithAuth('/orders', {
+		method: 'POST',
+		body: JSON.stringify(data)
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to create order' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to create order');
+	}
+
+	return res.json();
+}
+
+export async function holdOrder(id: string): Promise<{ message: string }> {
+	const res = await fetchWithAuth(`/orders/${id}/hold`, {
+		method: 'POST'
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to hold order' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to hold order');
+	}
+
+	return res.json();
+}
+
+export async function checkoutOrder(id: string): Promise<{ message: string; order: Order }> {
+	const idempotencyKey = crypto.randomUUID();
+	
+	const res = await fetchWithAuth(`/orders/${id}/checkout`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'Idempotency-Key': idempotencyKey
+		}
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Checkout failed' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Checkout failed');
+	}
+
+	return res.json();
 }
