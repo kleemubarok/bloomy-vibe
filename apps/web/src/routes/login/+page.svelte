@@ -4,6 +4,7 @@
 	import { Flower2, Loader2, AlertCircle } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
+	let email = $state('');
 	let pin = $state('');
 	let isLoading = $state(false);
 	let error = $state('');
@@ -20,7 +21,7 @@
 		isLoading = true;
 
 		try {
-			await login(pin);
+			await login(email, pin);
 			goto('/dashboard');
 		} catch (err: any) {
 			error = err.message || 'Login failed';
@@ -47,9 +48,22 @@
 
 		<!-- Login Form -->
 		<div class="bg-white rounded-3xl p-8 shadow-xl shadow-rose-100 border border-rose-50">
-			<h2 class="text-lg font-semibold text-rose-900 mb-6 text-center">Masuk dengan PIN</h2>
+			<h2 class="text-lg font-semibold text-rose-900 mb-6 text-center">Masuk dengan Email & PIN</h2>
 
 			<form onsubmit={handleLogin} class="space-y-6">
+				<div>
+					<label for="email" class="block text-sm font-medium text-rose-700 mb-2">Email</label>
+					<input
+						type="email"
+						id="email"
+						bind:value={email}
+						placeholder="nama@email.com"
+						class="w-full px-4 py-3 rounded-xl border border-rose-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
+						required
+						disabled={isLoading}
+					/>
+				</div>
+
 				<div>
 					<label for="pin" class="block text-sm font-medium text-rose-700 mb-2">PIN</label>
 					<input
@@ -73,7 +87,7 @@
 
 				<button
 					type="submit"
-					disabled={isLoading || !pin}
+					disabled={isLoading || !email || !pin}
 					class="w-full py-3 px-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-semibold rounded-xl hover:from-rose-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
 				>
 					{#if isLoading}
@@ -86,7 +100,7 @@
 			</form>
 
 			<p class="text-center text-xs text-rose-400 mt-6">
-				Gunakan PIN yang diberikan oleh admin
+				Gunakan email & PIN yang diberikan oleh admin
 			</p>
 		</div>
 

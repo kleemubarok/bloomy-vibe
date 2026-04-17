@@ -51,11 +51,11 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
 	});
 }
 
-export async function login(pin: string): Promise<{ token: string; user: { id: number; name: string; role: string } }> {
+export async function login(email: string, pin: string): Promise<{ token: string; user: { id: number; name: string; role: string } }> {
 	const res = await fetch(`${API_BASE}/auth/login`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ pin })
+		body: JSON.stringify({ email, pin })
 	});
 
 	if (!res.ok) {
@@ -65,9 +65,9 @@ export async function login(pin: string): Promise<{ token: string; user: { id: n
 		throw new Error(errorData.message || 'Login failed');
 	}
 
-	const data = await res.json() as { token: string; user: { id: number; name: string; role: string } };
-	setAuthToken(data.token);
-	return { token: data.token, user: data.user };
+	const data = await res.json() as { accessToken: string; user: { id: number; name: string; role: string } };
+	setAuthToken(data.accessToken);
+	return { token: data.accessToken, user: data.user };
 }
 
 export function logout(): void {
