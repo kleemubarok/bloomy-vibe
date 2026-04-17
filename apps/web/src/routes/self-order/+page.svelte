@@ -1,25 +1,30 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { getProducts, generateSelfOrderLink, type Product } from '$lib/api/client';
-	import { goto } from '$app/navigation';
-	import { Link, Copy, Check, Loader2, Package, ExternalLink } from 'lucide-svelte';
+	import { getProducts, generateSelfOrderLink, getSelfOrderLinks, deleteSelfOrderLink, type Product, type SelfOrderLinkItem } from '$lib/api/client';
+	import { Link, Copy, Check, Loader2, Package, ExternalLink, Trash2 } from 'lucide-svelte';
 
 	let products = $state<Product[]>([]);
+	let links = $state<SelfOrderLinkItem[]>([]);
 	let isLoading = $state(true);
 	let isGenerating = $state(false);
+	let isDeleting = $state<number | null>(null);
 	let error = $state('');
 
 	let selectedProductId = $state<number | null>(null);
 	let quantity = $state(1);
 	let customerName = $state('');
 
-	let generatedLink = $state('');
+	let generatedLinkId = $state<number | null>(null);
 	let copied = $state(false);
 
 	onMount(async () => {
 		if (!browser) return;
 		
+		await Promise.all([loadProducts(), loadLinks()]);
+	});
+
+	async function loadProducts() {
 		try {
 			products = await getProducts();
 		} catch (e) {
@@ -27,14 +32,21 @@
 		} finally {
 			isLoading = false;
 		}
-	});
+	}
+
+	async function loadLinks() {
+		try {
+			links = await getSelfOrderLinks();
+		} catch (e) {
+			console.error('Gagal memuat links:', e);
+		}
+	}
 
 	async function handleGenerate() {
 		if (!selectedProductId || !customerName) return;
 
 		isGenerating = true;
 		error = '';
-		copied = false;
 
 		try {
 			const result = await generateSelfOrderLink({
@@ -42,7 +54,12 @@
 				quantity,
 				customerName
 			});
-			generatedLink = result.link;
+			generatedLinkId = result.id;
+			await loadLinks();
+			
+			selectedProductId = null;
+			quantity = 1;
+			customerName = '';
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Gagal generate link';
 		} finally {
@@ -50,11 +67,24 @@
 		}
 	}
 
-	async function copyToClipboard() {
-		if (!generatedLink) return;
+	async function handleDelete(id: number) {
+		if (isDeleting !== null) return;
 		
+		isDeleting = id;
 		try {
-			await navigator.clipboard.writeText(generatedLink);
+			await deleteSelfOrderLink(id);
+			await loadLinks();
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Gagal hapus link';
+		} finally {
+			isDeleting = null;
+		}
+	}
+
+	async function copyToClipboard(uuid: string) {
+		const url = `${window.location.origin}/order/${uuid}`;
+		try {
+			await navigator.clipboard.writeText(url);
 			copied = true;
 			setTimeout(() => { copied = false; }, 2000);
 		} catch (e) {
@@ -70,6 +100,26 @@
 		}).format(price);
 	}
 
+	function formatDate(dateStr: string): string {
+		const date = new Date(dateStr);
+		return date.toLocaleDateString('id-ID', {
+			day: '2-digit',
+			month: 'short',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
+
+	function getLinkStatus(link: SelfOrderLinkItem): { label: string; color: string } {
+		if (link.isUsed) return { label: 'Sudah Digunakan', color: 'bg-gray-100 text-gray-500' };
+		if (new Date(link.expiresAt) < new Date()) return { label: 'Expired', color: 'bg-red-100 text-red-600' };
+		return { label: 'Aktif', color: 'bg-green-100 text-green-600' };
+	}
+
+	function isLinkActive(link: SelfOrderLinkItem): boolean {
+		return !link.isUsed && new Date(link.expiresAt) > new Date();
+	}
+
 	const selectedProduct = $derived(products.find(p => p.id === selectedProductId));
 </script>
 
@@ -77,18 +127,20 @@
 	<title>Self-Order - Bloomy POS</title>
 </svelte:head>
 
-<div class="max-w-2xl mx-auto space-y-6">
+<div class="max-w-4xl mx-auto space-y-6">
 	<div class="flex items-center gap-3 mb-6">
 		<div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
 			<Link size={20} class="text-rose-500" />
 		</div>
 		<div>
-			<h1 class="text-xl font-bold text-rose-900">Generate Self-Order Link</h1>
-			<p class="text-sm text-rose-400">Buat link untuk pelanggan pesan sendiri</p>
+			<h1 class="text-xl font-bold text-rose-900">Self-Order Links</h1>
+			<p class="text-sm text-rose-400">Buat & kelola link pesanan untuk pelanggan</p>
 		</div>
 	</div>
 
 	<div class="bg-white rounded-2xl border border-rose-100 p-6 space-y-6">
+		<h2 class="font-semibold text-rose-900">Generate Link Baru</h2>
+
 		{#if isLoading}
 			<div class="flex items-center justify-center py-8">
 				<Loader2 size={24} class="animate-spin text-rose-400" />
@@ -105,47 +157,21 @@
 					</a>
 				</div>
 
-				<div>
-					<label for="product" class="block text-sm font-medium text-rose-700 mb-2">Pilih Produk</label>
-					<select
-						id="product"
-						bind:value={selectedProductId}
-						class="w-full px-4 py-3 rounded-xl border border-rose-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
-					>
-						<option value={null}>-- Pilih Produk --</option>
-						{#each products as product}
-							<option value={product.id}>
-								{product.name} - {formatPrice(product.basePrice)}
-							</option>
-						{/each}
-					</select>
-				</div>
-
-				{#if selectedProduct}
-					<div class="bg-rose-50 rounded-xl p-4">
-						<div class="flex items-center gap-3">
-							<div class="w-12 h-12 rounded-lg bg-rose-100 flex items-center justify-center">
-								<Package size={20} class="text-rose-400" />
-							</div>
-							<div>
-								<p class="font-medium text-rose-900">{selectedProduct.name}</p>
-								<p class="text-sm text-rose-500">{formatPrice(selectedProduct.basePrice)}</p>
-							</div>
-						</div>
-					</div>
-				{/if}
-
-				<div class="grid grid-cols-2 gap-4">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
-						<label for="quantity" class="block text-sm font-medium text-rose-700 mb-2">Jumlah</label>
-						<input
-							type="number"
-							id="quantity"
-							bind:value={quantity}
-							min="1"
-							max="99"
+						<label for="product" class="block text-sm font-medium text-rose-700 mb-2">Pilih Produk</label>
+						<select
+							id="product"
+							bind:value={selectedProductId}
 							class="w-full px-4 py-3 rounded-xl border border-rose-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
-						/>
+						>
+							<option value={null}>-- Pilih Produk --</option>
+							{#each products as product}
+								<option value={product.id}>
+									{product.name} - {formatPrice(product.basePrice)}
+								</option>
+							{/each}
+						</select>
 					</div>
 
 					<div>
@@ -158,6 +184,34 @@
 							class="w-full px-4 py-3 rounded-xl border border-rose-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
 						/>
 					</div>
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div>
+						<label for="quantity" class="block text-sm font-medium text-rose-700 mb-2">Jumlah</label>
+						<input
+							type="number"
+							id="quantity"
+							bind:value={quantity}
+							min="1"
+							max="99"
+							class="w-full px-4 py-3 rounded-xl border border-rose-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
+						/>
+					</div>
+
+					{#if selectedProduct}
+						<div class="flex items-center">
+							<div class="bg-rose-50 rounded-xl p-4 flex items-center gap-3 w-full">
+								<div class="w-10 h-10 rounded-lg bg-rose-100 flex items-center justify-center">
+									<Package size={18} class="text-rose-400" />
+								</div>
+								<div>
+									<p class="font-medium text-rose-900">{selectedProduct.name}</p>
+									<p class="text-sm text-rose-500">{formatPrice(selectedProduct.basePrice)}</p>
+								</div>
+							</div>
+						</div>
+					{/if}
 				</div>
 
 				{#if error}
@@ -184,41 +238,76 @@
 		{/if}
 	</div>
 
-	{#if generatedLink}
-		<div class="bg-white rounded-2xl border border-green-200 p-6 space-y-4">
-			<div class="flex items-center gap-2 text-green-600">
-				<Check size={20} />
-				<span class="font-medium">Link berhasil dibuat!</span>
-			</div>
-
-			<div class="bg-rose-50 rounded-xl p-4">
-				<p class="text-xs text-rose-500 mb-2">Link Self-Order:</p>
-				<div class="flex items-center gap-2">
-					<input
-						type="text"
-						value={generatedLink}
-						readonly
-						class="flex-1 px-3 py-2 bg-white rounded-lg border border-rose-200 text-sm text-rose-900"
-					/>
-					<button
-						type="button"
-						onclick={copyToClipboard}
-						class="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors flex items-center gap-2"
-					>
-						{#if copied}
-							<Check size={16} />
-							<span>Copied!</span>
-						{:else}
-							<Copy size={16} />
-							<span>Copy</span>
-						{/if}
-					</button>
-				</div>
-			</div>
-
-			<p class="text-xs text-rose-400">
-				Link berlaku 12 jam. Kirimkan link ini ke pelanggan untuk membuat pesanan.
-			</p>
+	<div class="bg-white rounded-2xl border border-rose-100 overflow-hidden">
+		<div class="p-4 border-b border-rose-100">
+			<h2 class="font-semibold text-rose-900">Link yang Dibuat</h2>
 		</div>
-	{/if}
+
+		{#if links.length === 0}
+			<div class="p-8 text-center text-rose-300">
+				<Link size={32} class="mx-auto mb-2 opacity-50" />
+				<p>Belum ada link yang dibuat</p>
+			</div>
+		{:else}
+			<div class="divide-y divide-rose-100">
+				{#each links as link (link.id)}
+					{@const status = getLinkStatus(link)}
+					{@const isActive = isLinkActive(link)}
+					<div class="p-4 flex items-center gap-4 hover:bg-rose-50/50 transition-colors">
+						<div class="flex-1 min-w-0">
+							<div class="flex items-center gap-2 mb-1">
+								<p class="font-medium text-rose-900 truncate">{link.productName || 'Produk'}</p>
+								<span class="px-2 py-0.5 text-xs rounded-full {status.color}">
+									{status.label}
+								</span>
+							</div>
+							<p class="text-sm text-rose-500">
+								{link.customerName} • x{link.quantity} • {formatPrice((link.productPrice || 0) * link.quantity)}
+							</p>
+							<p class="text-xs text-rose-400">
+								{#if link.isUsed}
+									Digunakan
+								{:else if isActive}
+									Berlaku hingga {formatDate(link.expiresAt)}
+								{:else}
+									Expired {formatDate(link.expiresAt)}
+								{/if}
+							</p>
+						</div>
+
+						<div class="flex items-center gap-2">
+							{#if isActive}
+								<button
+									type="button"
+									onclick={() => copyToClipboard(link.uuid)}
+									class="p-2 rounded-lg bg-rose-100 text-rose-600 hover:bg-rose-200 transition-colors"
+									title="Copy Link"
+								>
+									{#if copied}
+										<Check size={18} />
+									{:else}
+										<Copy size={18} />
+									{/if}
+								</button>
+							{/if}
+							
+							<button
+								type="button"
+								onclick={() => handleDelete(link.id)}
+								disabled={isDeleting === link.id}
+								class="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+								title="Hapus Link"
+							>
+								{#if isDeleting === link.id}
+									<Loader2 size={18} class="animate-spin" />
+								{:else}
+									<Trash2 size={18} />
+								{/if}
+							</button>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</div>
 </div>

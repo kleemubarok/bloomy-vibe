@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
 import * as schema from '../db/schema';
 import { getDb, type Bindings } from '../db/client';
@@ -14,6 +14,57 @@ function generateUuid(): string {
 const selfOrder = new Hono<{ Bindings: Bindings }>();
 
 const LINK_EXPIRY_HOURS = 12;
+
+selfOrder.get('/links', verifyAuth, requireRole(['owner', 'staff', 'superadmin']), async (c) => {
+  const db = getDb(c.env.DB);
+  const limit = parseInt(c.req.query('limit') || '50');
+
+  const links = await db
+    .select({
+      id: schema.selfOrderLinks.id,
+      uuid: schema.selfOrderLinks.uuid,
+      productId: schema.selfOrderLinks.productId,
+      customerName: schema.selfOrderLinks.customerName,
+      quantity: schema.selfOrderLinks.quantity,
+      expiresAt: schema.selfOrderLinks.expiresAt,
+      isUsed: schema.selfOrderLinks.isUsed,
+      createdAt: schema.selfOrderLinks.createdAt,
+      productName: schema.products.name,
+      productPrice: schema.products.basePrice,
+    })
+    .from(schema.selfOrderLinks)
+    .leftJoin(schema.products, eq(schema.selfOrderLinks.productId, schema.products.id))
+    .orderBy(desc(schema.selfOrderLinks.createdAt))
+    .limit(limit);
+
+  return c.json(links);
+});
+
+selfOrder.delete('/links/:id', verifyAuth, requireRole(['owner', 'staff', 'superadmin']), async (c) => {
+  const id = c.req.param('id');
+  const db = getDb(c.env.DB);
+
+  const linkId = parseInt(id);
+  if (isNaN(linkId)) {
+    throw new HTTPException(400, { message: 'Invalid link ID' });
+  }
+
+  const [link] = await db
+    .select()
+    .from(schema.selfOrderLinks)
+    .where(eq(schema.selfOrderLinks.id, linkId))
+    .limit(1);
+
+  if (!link) {
+    throw new HTTPException(404, { message: 'Link not found' });
+  }
+
+  await db
+    .delete(schema.selfOrderLinks)
+    .where(eq(schema.selfOrderLinks.id, linkId));
+
+  return c.json({ message: 'Link deleted successfully' });
+});
 
 selfOrder.post('/generate', verifyAuth, requireRole(['owner', 'staff', 'superadmin']), async (c) => {
   const body = await c.req.json();
@@ -53,6 +104,7 @@ selfOrder.post('/generate', verifyAuth, requireRole(['owner', 'staff', 'superadm
   const fullUrl = `${baseUrl}/order/${linkUuid}`;
 
   return c.json({
+    id: link.id,
     uuid: linkUuid,
     url: fullUrl,
     expiresAt: link.expiresAt,
@@ -63,6 +115,7 @@ selfOrder.post('/generate', verifyAuth, requireRole(['owner', 'staff', 'superadm
     },
     customerName,
     quantity,
+    isUsed: false,
   }, 201);
 });
 
@@ -155,7 +208,7 @@ selfOrder.post('/:uuid', async (c) => {
     }, 422);
   }
 
-  await db.transaction(async (tx: DbType) => {
+  await db.transaction(async (tx: any) => {
     const [newOrder] = await tx.insert(schema.orders).values({
       customerName: link.customerName,
       customerWhatsapp: customerWhatsapp || null,
@@ -217,8 +270,8 @@ selfOrder.post('/:uuid', async (c) => {
     .orderBy(schema.orders.createdAt);
 
   const latestOrder = createdOrder
-    .filter((o: { orderType: string }) => o.orderType === 'Self-Order')
-    .sort((a: { createdAt: Date }, b: { createdAt: Date }) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+    .filter((o: any) => o.orderType === 'Self-Order')
+    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
   return c.json({
     message: 'Order submitted successfully',
@@ -233,13 +286,18 @@ selfOrder.post('/:uuid', async (c) => {
 });
 
 selfOrder.post('/:id/cancel', verifyAuth, async (c) => {
-  const id = c.req.param('id') as string;
+  const id = c.req.param('id');
   const db = getDb(c.env.DB);
+
+  const linkId = parseInt(id);
+  if (isNaN(linkId)) {
+    throw new HTTPException(400, { message: 'Invalid link ID' });
+  }
 
   const [link] = await db
     .select()
     .from(schema.selfOrderLinks)
-    .where(eq(schema.selfOrderLinks.id, id))
+    .where(eq(schema.selfOrderLinks.id, linkId))
     .limit(1);
 
   if (!link) {
@@ -253,11 +311,11 @@ selfOrder.post('/:id/cancel', verifyAuth, async (c) => {
     .orderBy(schema.orders.createdAt);
 
   const latestOrder = orders
-    .filter((o: { orderType: string }) => o.orderType === 'Self-Order')
-    .sort((a: { createdAt: Date }, b: { createdAt: Date }) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+    .filter((o: any) => o.orderType === 'Self-Order')
+    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
   if (latestOrder && latestOrder.status === 'Antri') {
-    await db.transaction(async (tx: DbType) => {
+    await db.transaction(async (tx: any) => {
       await tx
         .update(schema.orders)
         .set({ status: 'Batal' })
