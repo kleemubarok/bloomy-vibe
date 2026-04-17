@@ -5,8 +5,22 @@ export type { Order, OrderItem };
 const API_BASE = '/api';
 
 function getAuthToken(): string | null {
-	if (typeof localStorage === 'undefined') return null;
-	return localStorage.getItem('auth_token');
+	if (typeof sessionStorage === 'undefined') return null;
+	return sessionStorage.getItem('auth_token');
+}
+
+export function setAuthToken(token: string): void {
+	if (typeof sessionStorage === 'undefined') return;
+	sessionStorage.setItem('auth_token', token);
+}
+
+export function removeAuthToken(): void {
+	if (typeof sessionStorage === 'undefined') return;
+	sessionStorage.removeItem('auth_token');
+}
+
+export function isAuthenticated(): boolean {
+	return !!getAuthToken();
 }
 
 async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
@@ -20,10 +34,47 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
 		headers['Authorization'] = `Bearer ${token}`;
 	}
 
-	return fetch(`${API_BASE}${url}`, {
+	const response = fetch(`${API_BASE}${url}`, {
 		...options,
 		headers
 	});
+
+	return response.then(async (res) => {
+		if (res.status === 401) {
+			removeAuthToken();
+			if (typeof window !== 'undefined') {
+				window.location.href = '/login';
+			}
+			throw new Error('Session expired');
+		}
+		return res;
+	});
+}
+
+export async function login(pin: string): Promise<{ token: string; user: { id: number; name: string; role: string } }> {
+	const res = await fetch(`${API_BASE}/auth/login`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ pin })
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Login failed' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Login failed');
+	}
+
+	const data = await res.json() as { token: string; user: { id: number; name: string; role: string } };
+	setAuthToken(data.token);
+	return { token: data.token, user: data.user };
+}
+
+export function logout(): void {
+	removeAuthToken();
+	if (typeof window !== 'undefined') {
+		window.location.href = '/login';
+	}
 }
 
 export async function getOrders(status?: string[]): Promise<Order[]> {

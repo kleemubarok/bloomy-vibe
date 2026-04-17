@@ -1,0 +1,27 @@
+# Tasks: Frontend Auth Integration (Issue #5)
+
+- [x] Modify `apps/web/src/lib/api/client.ts`
+  - [x] Change localStorage → sessionStorage
+  - [x] Add setAuthToken()
+  - [x] Add removeAuthToken()
+  - [x] Add isAuthenticated()
+  - [x] Add login() function
+  - [x] Add logout() function
+  - [x] Add 401 handler for auto-redirect
+- [x] Create `apps/web/src/routes/login/+page.svelte`
+  - [x] PIN input form
+  - [x] Login error handling
+  - [x] Redirect on success
+- [x] Modify `apps/web/src/routes/+layout.svelte`
+  - [x] Add auth check on mount
+  - [x] Add logout button
+- [x] Fix `apps/api/src/db/client.ts`
+  - [x] Add fallback to localDB when no D1 binding
+- [x] Execute & Verify
+  - [x] Run `bun test` - 32 pass
+  - [x] Run web build - success
+- [x] Documentation
+  - [x] Save plan, task list, and walkthrough to `docs/issue-5/`
+- [x] Commit & Merge
+  - [x] Commit to `feature/issue-5-frontend-auth`
+  - [x] Merge to `main`

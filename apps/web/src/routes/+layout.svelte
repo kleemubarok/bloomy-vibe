@@ -1,9 +1,11 @@
 <script lang="ts">
 	import '../app.css';
 	import { appState } from '$lib/stores/app.svelte';
-	import { Home, ShoppingCart, Package, History, User, WifiOff, Bell } from 'lucide-svelte';
+	import { Home, ShoppingCart, Package, History, User, WifiOff, Bell, LogOut } from 'lucide-svelte';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
+	import { isAuthenticated, logout } from '$lib/api/client';
+	import { goto } from '$app/navigation';
 
 	let { children } = $props();
 
@@ -14,7 +16,19 @@
 		{ name: 'Riwayat', icon: History, href: '/audit' }
 	];
 
-	// Handle PWA reload/refresh logic if needed
+	onMount(() => {
+		const publicRoutes = ['/login', '/order'];
+		const isPublicRoute = publicRoutes.some(route => page.url.pathname.startsWith(route));
+		
+		if (!isPublicRoute && !isAuthenticated()) {
+			goto('/login');
+		}
+	});
+
+	function handleLogout(e: Event) {
+		e.preventDefault();
+		logout();
+	}
 </script>
 
 <svelte:head>
@@ -43,6 +57,13 @@
 			<button class="p-2 rounded-full text-rose-400 hover:bg-rose-50 transition-colors relative">
 				<Bell size={20} />
 				<span class="absolute top-1 right-1 w-2 h-2 bg-rose-600 rounded-full border border-white"></span>
+			</button>
+			<button 
+				onclick={handleLogout}
+				class="p-2 rounded-full text-rose-400 hover:bg-rose-50 transition-colors"
+				title="Logout"
+			>
+				<LogOut size={20} />
 			</button>
 			<div class="flex items-center gap-2 pl-2 border-l border-rose-100">
 				<div class="hidden sm:block text-right">
