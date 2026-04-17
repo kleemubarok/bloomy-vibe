@@ -1,14 +1,43 @@
 <script lang="ts">
 	import { posStore } from '$lib/stores/pos.svelte';
+	import type { PaymentMethod } from '$lib/api/client';
 	import { Minus, Plus, Trash2, ShoppingCart, AlertCircle } from 'lucide-svelte';
 
 	let { 
 		onHold, 
-		onCheckout 
+		onPay 
 	}: { 
 		onHold: () => Promise<void>;
-		onCheckout: () => Promise<void>;
+		onPay: (method: PaymentMethod, amountPaid: number) => Promise<void>;
 	} = $props();
+
+	let paymentMethod = $state<PaymentMethod>('Cash');
+	let amountPaid = $state<number>(0);
+	let showPaymentModal = $state(false);
+
+	function openPaymentModal() {
+		amountPaid = posStore.getTotal();
+		showPaymentModal = true;
+	}
+
+	function closePaymentModal() {
+		showPaymentModal = false;
+	}
+
+	async function handlePay() {
+		await onPay(paymentMethod, amountPaid);
+		closePaymentModal();
+	}
+
+	function getChange(): number {
+		return Math.max(0, amountPaid - posStore.getTotal());
+	}
+
+	const paymentMethods: { value: PaymentMethod; label: string }[] = [
+		{ value: 'Cash', label: 'Tunai' },
+		{ value: 'QRIS', label: 'QRIS' },
+		{ value: 'Transfer', label: 'Transfer' }
+	];
 </script>
 
 <div class="bg-white rounded-2xl border border-rose-100 shadow-lg h-full flex flex-col">
@@ -138,12 +167,95 @@
 			</button>
 			<button
 				type="button"
-				onclick={onCheckout}
+				onclick={openPaymentModal}
 				disabled={posStore.items.length === 0 || !posStore.customerName || posStore.isProcessing}
 				class="py-2.5 px-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-sm font-semibold rounded-xl hover:from-rose-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
 			>
-				Checkout
+				Bayar
 			</button>
 		</div>
 	</div>
 </div>
+
+{#if showPaymentModal}
+	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+		<div class="bg-white rounded-3xl p-6 max-w-sm w-full">
+			<h3 class="text-lg font-semibold text-rose-900 mb-4">Pembayaran</h3>
+			
+			<div class="space-y-4">
+				<div>
+					<label class="block text-sm font-medium text-rose-700 mb-2">Metode Bayar</label>
+					<div class="grid grid-cols-3 gap-2">
+						{#each paymentMethods as method}
+							<button
+								type="button"
+								onclick={() => paymentMethod = method.value}
+								class="py-2 px-3 text-sm font-medium rounded-xl border transition-all
+									{paymentMethod === method.value 
+										? 'bg-rose-500 text-white border-rose-500' 
+										: 'bg-white text-rose-600 border-rose-200 hover:border-rose-300'}"
+							>
+								{method.label}
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				{#if paymentMethod === 'Cash'}
+					<div>
+						<label for="amountPaid" class="block text-sm font-medium text-rose-700 mb-2">Jumlah Bayar</label>
+						<input
+							type="number"
+							id="amountPaid"
+							bind:value={amountPaid}
+							min={posStore.getTotal()}
+							class="w-full px-3 py-2 text-sm rounded-xl border border-rose-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
+						/>
+					</div>
+
+					<div class="flex justify-between py-2 border-t border-rose-100">
+						<span class="text-rose-600">Kembalian</span>
+						<span class="font-bold text-rose-600">
+							{new Intl.NumberFormat('id-ID', {
+								style: 'currency',
+								currency: 'IDR',
+								minimumFractionDigits: 0
+							}).format(getChange())}
+						</span>
+					</div>
+				{:else}
+					<div class="p-4 bg-rose-50 rounded-xl text-center">
+						<p class="text-rose-600 text-sm">
+							{new Intl.NumberFormat('id-ID', {
+								style: 'currency',
+								currency: 'IDR',
+								minimumFractionDigits: 0
+							}).format(posStore.getTotal())}
+						</p>
+					</div>
+				{/if}
+			</div>
+
+			<div class="flex gap-2 mt-6">
+				<button
+					type="button"
+					onclick={closePaymentModal}
+					class="flex-1 py-2.5 px-3 bg-rose-100 text-rose-600 text-sm font-semibold rounded-xl hover:bg-rose-200 transition-all"
+				>
+					Batal
+				</button>
+				<button
+					type="button"
+					onclick={handlePay}
+					disabled={posStore.isProcessing || (paymentMethod === 'Cash' && amountPaid < posStore.getTotal())}
+					class="flex-1 py-2.5 px-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-sm font-semibold rounded-xl hover:from-rose-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+				>
+					{#if posStore.isProcessing}
+						<span class="animate-spin">⟳</span>
+					{/if}
+					Bayar Sekarang
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}

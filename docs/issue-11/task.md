@@ -11,6 +11,14 @@
   - [x] Add `createOrder()` function
   - [x] Add `holdOrder()` function
   - [x] Add `checkoutOrder()` function
+  - [x] Add `recordPayment()` function
+
+- [x] Create `apps/api/src/routes/payments.ts`
+  - [x] POST /api/payments for recording payments
+  - [x] GET /api/payments/order/:orderId for listing payments
+
+- [x] Modify `apps/api/src/index.ts`
+  - [x] Register payments route
 
 - [x] Create `apps/web/src/lib/stores/pos.svelte.ts`
   - [x] Cart state management
@@ -26,12 +34,17 @@
   - [x] Quantity controls
   - [x] Total display
   - [x] Customer info form
-  - [x] Hold & Checkout buttons
+  - [x] Hold button
+  - [x] Payment modal with method selection
+  - [x] Cash amount input
+  - [x] Change calculation
+  - [x] Bayar button
 
 - [x] Create `apps/web/src/routes/pos/+page.svelte`
   - [x] Main POS layout
   - [x] Combine ProductGrid + Cart
-  - [x] Handle hold/checkout flows
+  - [x] Handle hold flow
+  - [x] Handle payment flow (create order → hold → record payment → checkout)
   - [x] Success/error handling
 
 - [x] Create `docs/issue-11/walkthrough.md`

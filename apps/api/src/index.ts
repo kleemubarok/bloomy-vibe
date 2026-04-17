@@ -4,6 +4,7 @@ import auth from './routes/auth';
 import inventory from './routes/inventory';
 import products from './routes/products';
 import orders from './routes/orders';
+import payments from './routes/payments';
 import selfOrder from './routes/self-order';
 import sync from './routes/sync';
 import { verifyAuth, requireRole } from './middleware/guard';
@@ -30,6 +31,9 @@ app.route('/api/products', products);
 
 // Order Routes
 app.route('/api/orders', orders);
+
+// Payment Routes
+app.route('/api/payments', payments);
 
 // Self-Order Routes
 app.route('/api/self-order', selfOrder);

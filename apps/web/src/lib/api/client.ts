@@ -219,3 +219,38 @@ export async function checkoutOrder(id: string): Promise<{ message: string; orde
 
 	return res.json();
 }
+
+export type PaymentMethod = 'Cash' | 'QRIS' | 'Transfer';
+
+export interface PaymentResult {
+	payment: {
+		id: number;
+		orderId: string;
+		method: PaymentMethod;
+		amount: number;
+		reference?: string;
+	};
+	paymentStatus: 'Pending' | 'Paid' | 'Partial';
+	message: string;
+}
+
+export async function recordPayment(data: {
+	orderId: string;
+	method: PaymentMethod;
+	amount: number;
+	reference?: string;
+}): Promise<PaymentResult> {
+	const res = await fetchWithAuth('/payments', {
+		method: 'POST',
+		body: JSON.stringify(data)
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to record payment' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to record payment');
+	}
+
+	return res.json();
+}

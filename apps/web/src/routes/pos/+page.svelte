@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { getProducts, createOrder, holdOrder, checkoutOrder, type Product } from '$lib/api/client';
+	import { getProducts, createOrder, holdOrder, checkoutOrder, recordPayment, type Product, type PaymentMethod } from '$lib/api/client';
 	import { posStore } from '$lib/stores/pos.svelte';
 	import Cart from '$lib/components/Cart.svelte';
 	import ProductGrid from '$lib/components/ProductGrid.svelte';
-	import { CheckCircle, Loader2 } from 'lucide-svelte';
+	import { CheckCircle } from 'lucide-svelte';
 
 	let products = $state<Product[]>([]);
 	let isLoadingProducts = $state(true);
@@ -59,7 +59,7 @@
 		}
 	}
 
-	async function handleCheckout() {
+	async function handlePay(method: PaymentMethod, amountPaid: number) {
 		if (posStore.items.length === 0 || !posStore.customerName) return;
 
 		posStore.setProcessing(true);
@@ -79,17 +79,30 @@
 
 			const order = await createOrder(orderData);
 			await holdOrder(order.id);
-			await checkoutOrder(order.id);
+			
+			const paymentResult = await recordPayment({
+				orderId: order.id,
+				method,
+				amount: method === 'Cash' ? amountPaid : posStore.getTotal(),
+				reference: undefined
+			});
 
-			successMessage = 'Checkout berhasil! Inventory sudah dikurangi.';
+			if (paymentResult.paymentStatus === 'Paid') {
+				await checkoutOrder(order.id);
+			}
+
+			const change = method === 'Cash' ? Math.max(0, amountPaid - posStore.getTotal()) : 0;
+			successMessage = change > 0 
+				? `Pembayaran berhasil! Kembalian: ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(change)}`
+				: 'Pembayaran berhasil!';
 			showSuccess = true;
 			posStore.clearCart();
 
 			setTimeout(() => {
 				showSuccess = false;
-			}, 4000);
+			}, 5000);
 		} catch (error) {
-			posStore.setError(error instanceof Error ? error.message : 'Gagal checkout');
+			posStore.setError(error instanceof Error ? error.message : 'Gagal memproses pembayaran');
 		} finally {
 			posStore.setProcessing(false);
 		}
@@ -119,7 +132,7 @@
 
 	<div class="lg:col-span-1">
 		<div class="sticky top-4">
-			<Cart onHold={handleHold} onCheckout={handleCheckout} />
+			<Cart onHold={handleHold} onPay={handlePay} />
 		</div>
 	</div>
 </div>
