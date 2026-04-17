@@ -44,15 +44,10 @@ selfOrder.delete('/links/:id', verifyAuth, requireRole(['owner', 'staff', 'super
   const id = c.req.param('id');
   const db = getDb(c.env.DB);
 
-  const linkId = parseInt(id);
-  if (isNaN(linkId)) {
-    throw new HTTPException(400, { message: 'Invalid link ID' });
-  }
-
   const [link] = await db
     .select()
     .from(schema.selfOrderLinks)
-    .where(eq(schema.selfOrderLinks.id, linkId))
+    .where(eq(schema.selfOrderLinks.id, id))
     .limit(1);
 
   if (!link) {
@@ -61,7 +56,7 @@ selfOrder.delete('/links/:id', verifyAuth, requireRole(['owner', 'staff', 'super
 
   await db
     .delete(schema.selfOrderLinks)
-    .where(eq(schema.selfOrderLinks.id, linkId));
+    .where(eq(schema.selfOrderLinks.id, id));
 
   return c.json({ message: 'Link deleted successfully' });
 });
@@ -285,14 +280,9 @@ selfOrder.post('/:uuid', async (c) => {
   }, 201);
 });
 
-selfOrder.post('/:id/cancel', verifyAuth, async (c) => {
-  const id = c.req.param('id');
+selfOrder.post('/:linkId/cancel', verifyAuth, async (c) => {
+  const linkId = c.req.param('linkId');
   const db = getDb(c.env.DB);
-
-  const linkId = parseInt(id);
-  if (isNaN(linkId)) {
-    throw new HTTPException(400, { message: 'Invalid link ID' });
-  }
 
   const [link] = await db
     .select()

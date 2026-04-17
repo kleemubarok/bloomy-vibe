@@ -8,14 +8,13 @@
 	let links = $state<SelfOrderLinkItem[]>([]);
 	let isLoading = $state(true);
 	let isGenerating = $state(false);
-	let isDeleting = $state<number | null>(null);
+	let isDeleting = $state<string | null>(null);
 	let error = $state('');
 
 	let selectedProductId = $state<number | null>(null);
 	let quantity = $state(1);
 	let customerName = $state('');
 
-	let generatedLinkId = $state<number | null>(null);
 	let copied = $state(false);
 
 	onMount(async () => {
@@ -49,12 +48,11 @@
 		error = '';
 
 		try {
-			const result = await generateSelfOrderLink({
+			await generateSelfOrderLink({
 				productId: selectedProductId,
 				quantity,
 				customerName
 			});
-			generatedLinkId = result.id;
 			await loadLinks();
 			
 			selectedProductId = null;
@@ -67,7 +65,7 @@
 		}
 	}
 
-	async function handleDelete(id: number) {
+	async function handleDelete(id: string) {
 		if (isDeleting !== null) return;
 		
 		isDeleting = id;
@@ -100,11 +98,12 @@
 		}).format(price);
 	}
 
-	function formatDate(dateStr: string): string {
-		const date = new Date(dateStr);
-		return date.toLocaleDateString('id-ID', {
+	function formatDate(date: Date | string): string {
+		const d = new Date(date);
+		return d.toLocaleDateString('id-ID', {
 			day: '2-digit',
 			month: 'short',
+			year: 'numeric',
 			hour: '2-digit',
 			minute: '2-digit'
 		});
@@ -112,7 +111,8 @@
 
 	function getLinkStatus(link: SelfOrderLinkItem): { label: string; color: string } {
 		if (link.isUsed) return { label: 'Sudah Digunakan', color: 'bg-gray-100 text-gray-500' };
-		if (new Date(link.expiresAt) < new Date()) return { label: 'Expired', color: 'bg-red-100 text-red-600' };
+		const expiresAt = new Date(link.expiresAt);
+		if (expiresAt < new Date()) return { label: 'Expired', color: 'bg-red-100 text-red-600' };
 		return { label: 'Aktif', color: 'bg-green-100 text-green-600' };
 	}
 
@@ -239,8 +239,15 @@
 	</div>
 
 	<div class="bg-white rounded-2xl border border-rose-100 overflow-hidden">
-		<div class="p-4 border-b border-rose-100">
+		<div class="p-4 border-b border-rose-100 flex items-center justify-between">
 			<h2 class="font-semibold text-rose-900">Link yang Dibuat</h2>
+			<button
+				type="button"
+				onclick={loadLinks}
+				class="text-sm text-rose-500 hover:text-rose-600"
+			>
+				Refresh
+			</button>
 		</div>
 
 		{#if links.length === 0}
@@ -266,7 +273,7 @@
 							</p>
 							<p class="text-xs text-rose-400">
 								{#if link.isUsed}
-									Digunakan
+									Digunakan pada {formatDate(link.createdAt)}
 								{:else if isActive}
 									Berlaku hingga {formatDate(link.expiresAt)}
 								{:else}

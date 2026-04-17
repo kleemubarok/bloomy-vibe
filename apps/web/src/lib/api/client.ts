@@ -286,7 +286,7 @@ export async function generateSelfOrderLink(data: {
 	productId: number;
 	quantity: number;
 	customerName: string;
-}): Promise<SelfOrderLink> {
+}): Promise<SelfOrderLink & { id: string; isUsed: boolean }> {
 	const res = await fetchWithAuth('/self-order/generate', {
 		method: 'POST',
 		body: JSON.stringify(data)
@@ -341,29 +341,32 @@ export async function submitSelfOrder(uuid: string, data: SelfOrderSubmitData): 
 }
 
 export interface SelfOrderLinkItem {
-	id: number;
+	id: string;
 	uuid: string;
 	productId: number;
 	productName?: string;
 	productPrice?: number;
 	customerName: string;
 	quantity: number;
-	expiresAt: string;
+	expiresAt: Date | string;
 	isUsed: boolean;
-	createdAt: string;
+	createdAt: Date | string;
 }
 
 export async function getSelfOrderLinks(): Promise<SelfOrderLinkItem[]> {
 	const res = await fetchWithAuth('/self-order/links');
 	
 	if (!res.ok) {
-		throw new Error('Failed to fetch links');
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to fetch links' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to fetch links');
 	}
 	
 	return res.json();
 }
 
-export async function deleteSelfOrderLink(id: number): Promise<void> {
+export async function deleteSelfOrderLink(id: string): Promise<void> {
 	const res = await fetchWithAuth(`/self-order/links/${id}`, {
 		method: 'DELETE'
 	});
