@@ -51,7 +51,7 @@
 
 			setTimeout(() => {
 				showSuccess = false;
-			}, 4000);
+			}, 2500);
 		} catch (error) {
 			posStore.setError(error instanceof Error ? error.message : 'Gagal hold order');
 		} finally {
@@ -100,7 +100,7 @@
 
 			setTimeout(() => {
 				showSuccess = false;
-			}, 5000);
+			}, 2500);
 		} catch (error) {
 			posStore.setError(error instanceof Error ? error.message : 'Gagal memproses pembayaran');
 		} finally {

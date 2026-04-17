@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, or, inArray } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
 import * as schema from '../db/schema';
 import { getDb, type Bindings } from '../db/client';
@@ -10,17 +10,23 @@ const orders = new Hono<{ Bindings: Bindings }>();
 
 orders.get('/', verifyAuth, async (c) => {
   const db = getDb(c.env.DB);
-  const status = c.req.query('status');
+  const statusParams = c.req.queries('status');
   const limit = parseInt(c.req.query('limit') || '50');
 
-  if (status) {
-    const results = await db
-      .select()
-      .from(schema.orders)
-      .where(eq(schema.orders.status, status as 'Antri' | 'Dirangkai' | 'Selesai' | 'Diambil' | 'Dikirim' | 'Batal' | 'Draft'))
-      .orderBy(desc(schema.orders.createdAt))
-      .limit(limit);
-    return c.json(results);
+  if (statusParams && statusParams.length > 0) {
+    const validStatuses = statusParams.filter(s => 
+      ['Antri', 'Dirangkai', 'Selesai', 'Diambil', 'Dikirim', 'Batal', 'Draft'].includes(s)
+    ) as ('Antri' | 'Dirangkai' | 'Selesai' | 'Diambil' | 'Dikirim' | 'Batal' | 'Draft')[];
+    
+    if (validStatuses.length > 0) {
+      const results = await db
+        .select()
+        .from(schema.orders)
+        .where(inArray(schema.orders.status, validStatuses))
+        .orderBy(desc(schema.orders.createdAt))
+        .limit(limit);
+      return c.json(results);
+    }
   }
 
   const results = await db
