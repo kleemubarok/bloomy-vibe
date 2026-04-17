@@ -24,6 +24,7 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@hono/swagger-ui": "^0.6.1",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.12",
     "uuidv7": "^1.2.1"
