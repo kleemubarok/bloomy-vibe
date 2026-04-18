@@ -95,7 +95,7 @@ audit.get('/orders', verifyAuth, async (c) => {
           createdAt: schema.orders.createdAt,
         })
         .from(schema.orders)
-        .where(eq(schema.orders.paymentStatus, 'Paid'))
+        .where(inArray(schema.orders.id, ids))
         .orderBy(desc(schema.orders.createdAt))
         .limit(limit);
     }
