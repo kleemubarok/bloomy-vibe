@@ -69,11 +69,12 @@ audit.get('/orders', verifyAuth, async (c) => {
       .where(eq(schema.orders.paymentStatus, 'Paid'));
 
     let filteredOrders = allOrders;
-    if (q) {
+    if (q && q.length > 0) {
       const qLower = q.toLowerCase();
-      filteredOrders = allOrders.filter((o: any) => 
-        o.customerName && o.customerName.toLowerCase().includes(qLower)
-      );
+      filteredOrders = allOrders.filter((o: any) => {
+        const name = o.customerName || '';
+        return name.toLowerCase().includes(qLower);
+      });
     }
 
     const totalCount = filteredOrders.length;
@@ -167,16 +168,21 @@ audit.get('/order/:id', verifyAuth, async (c) => {
       totalPrice: i.totalPrice,
     }));
 
+    const hpp = order.totalHppSnapshot ? Number(order.totalHppSnapshot) : 0;
+    const total = order.totalAmount ? Number(order.totalAmount) : 0;
+    const profit = total - hpp;
+
     return c.json({
       id: order.id,
       customerName: order.customerName || '-',
-      customerWhatsapp: order.customerWhatsapp || null,
-      totalAmount: order.totalAmount,
-      totalHppSnapshot: order.totalHppSnapshot,
+      customerWhatsapp: order.customerWhatsapp || '',
+      totalAmount: total,
+      totalHppSnapshot: hpp,
       paymentStatus: order.paymentStatus,
       status: order.status,
       createdAt: order.createdAt,
       items: formattedItems,
+      profit: profit,
       profit: order.totalHppSnapshot ? Number(order.totalAmount) - Number(order.totalHppSnapshot) : null,
     });
   } catch (e) {
