@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { login, isAuthenticated } from '$lib/api/client';
+	import { login, isAuthenticated, setCurrentUser } from '$lib/api/client';
 	import { goto } from '$app/navigation';
 	import { Flower2, Loader2, AlertCircle } from 'lucide-svelte';
 	import { onMount } from 'svelte';
@@ -21,7 +21,8 @@
 		isLoading = true;
 
 		try {
-			await login(email, pin);
+			const result = await login(email, pin);
+			setCurrentUser(result.user);
 			goto('/dashboard');
 		} catch (err: any) {
 			error = err.message || 'Login failed';

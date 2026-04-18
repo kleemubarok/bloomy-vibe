@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Product } from '$lib/api/types';
+	import type { Product } from '$lib/api/client';
 	import { posStore } from '$lib/stores/pos.svelte';
 	import { Package, Plus, Loader2 } from 'lucide-svelte';
 

@@ -18,6 +18,26 @@ Implementation of Inventory, Products, and Product Recipes with role-based acces
 - `PATCH /api/products/:id`: Updates product metadata and replaces existing recipe mapping completely.
 - `DELETE /api/products/:id`: Soft deletes product setting `isDeleted = true`.
 
+### Frontend API Client
+
+#### [API Client - Missing Functions Fixed](../../apps/web/src/lib/api/client.ts)
+Added missing inventory and products API functions that the UI depends on:
+
+- `getInventory()` - Fetches inventory items list
+- `createInventory(data)` - Creates new inventory item
+- `updateInventory(id, data)` - Updates inventory item
+- `deleteInventory(id)` - Soft deletes inventory item
+- `getProductsList()` - Fetches products list with recipes
+- `createProduct(data)` - Creates new product with recipes
+- `updateProduct(id, data)` - Updates product and recipes
+- `deleteProduct(id)` - Soft deletes product
+
+Also added TypeScript interfaces:
+- `InventoryItem` - Type for inventory data
+- `Product` - Type for product data with recipes
+- `ProductRecipe` - Type for recipe entries
+- `CreateProductData` - Type for product creation payload
+
 ### Integration
 - Routes are registered in `apps/api/src/index.ts`.
 - `test-api.ts` script created for end-to-end programmatic testing of the Master Data endpoints.

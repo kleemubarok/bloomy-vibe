@@ -15,6 +15,7 @@ export interface OrderItem {
 	productName?: string;
 	quantity: number;
 	unitPriceAtOrder: number;
+	unitPrice?: number;
 	notes?: string;
 }
 
@@ -43,22 +44,6 @@ export interface ProductionState {
 	isLoading: boolean;
 	error: string | null;
 	lastFetched: Date | null;
-}
-
-export interface Product {
-	id: number;
-	name: string;
-	slug: string;
-	category: string;
-	basePrice: number;
-	imageUrl?: string;
-	isActive: boolean;
-	recipes?: {
-		inventoryId: number;
-		inventoryName: string;
-		quantityRequired: number;
-		unit: string;
-	}[];
 }
 
 export interface CartItem {
