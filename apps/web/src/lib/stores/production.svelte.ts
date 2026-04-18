@@ -1,5 +1,6 @@
 import { browser } from '$app/environment';
 import { getOrders, patchOrder, type Order } from '$lib/api/client';
+import { onOrderStatusUpdate, initRealtime, disconnectRealtime } from '$lib/realtime/client';
 
 export type { Order };
 
@@ -67,6 +68,26 @@ export function createProductionStore() {
 		return orders.filter((o) => o.status === status);
 	}
 
+	let unsubscribers: (() => void)[] = [];
+
+	function initRealtimeConnection() {
+		if (!browser) return;
+
+		initRealtime();
+		const unsub = onOrderStatusUpdate(() => {
+			fetchActiveOrders();
+		});
+		unsubscribers.push(unsub);
+	}
+
+	function cleanupRealtime() {
+		for (const unsub of unsubscribers) {
+			unsub();
+		}
+		unsubscribers = [];
+		disconnectRealtime();
+	}
+
 	return {
 		get orders() {
 			return orders;
@@ -87,7 +108,9 @@ export function createProductionStore() {
 		getOrdersByStatus,
 		initOrders(initialOrders: Order[]) {
 			orders = initialOrders;
-		}
+		},
+		initRealtimeConnection,
+		cleanupRealtime
 	};
 }
 

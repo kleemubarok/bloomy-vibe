@@ -9,6 +9,7 @@ import selfOrder from './routes/self-order';
 import sync from './routes/sync';
 import { verifyAuth, requireRole } from './middleware/guard';
 import { HTTPException } from 'hono/http-exception';
+import sse from './routes/sse';
 
 const app = new Hono();
 
@@ -377,6 +378,9 @@ app.route('/api/self-order', selfOrder);
 
 // Sync Routes
 app.route('/api/sync', sync);
+
+// SSE Routes
+app.route('/api/sse', sse);
 
 // Protected Test Routes
 app.get('/api/test/staff', verifyAuth, requireRole(['staff']), (c) => {

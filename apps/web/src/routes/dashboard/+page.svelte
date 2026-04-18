@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { productionStore } from '$lib/stores/production.svelte';
 	import { getNextStatus, type Order } from '$lib/api/client';
 	import OrderCard from '$lib/components/OrderCard.svelte';
@@ -23,6 +24,13 @@
 	async function handleRefresh() {
 		await productionStore.fetchActiveOrders();
 	}
+
+	onMount(() => {
+		productionStore.initRealtimeConnection();
+		return () => {
+			productionStore.cleanupRealtime();
+		};
+	});
 </script>
 
 <div class="space-y-4">
