@@ -16,7 +16,6 @@
 	import { onMount } from 'svelte';
 	import { isAuthenticated, logout } from '$lib/api/client';
 	import { goto } from '$app/navigation';
-	import SyncStatus from '$lib/components/SyncStatus.svelte';
 
 	let { children } = $props();
 
@@ -47,8 +46,8 @@
 	<title>Bloomy POS</title>
 </svelte:head>
 
-<!-- Offline Indicator -->
-{#if !appState.isOnline}
+<!-- Offline Indicator (disabling - navigator.onLine unreliable) -->
+{#if false && !appState.isOnline}
 	<div
 		class="fixed top-0 left-0 right-0 z-[100] bg-rose-600 text-white text-xs py-1 px-4 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-300"
 	>

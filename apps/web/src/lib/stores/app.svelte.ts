@@ -1,7 +1,7 @@
 import { browser } from '$app/environment';
 
 export function createAppState() {
-	let isOnline = $state(typeof navigator !== 'undefined' ? navigator.onLine : true);
+	let isOnline = $state(true);
 	let theme = $state('light');
 	
 	function setOnlineStatus(status: boolean) {
@@ -20,7 +20,8 @@ export function createAppState() {
 	return {
 		get isOnline() { return isOnline; },
 		get theme() { return theme; },
-		toggleTheme
+		toggleTheme,
+		setOnlineStatus
 	};
 }
 
