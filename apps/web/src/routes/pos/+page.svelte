@@ -196,7 +196,7 @@
 	<button
 		type="button"
 		onclick={() => (showMobileCart = true)}
-		class="fixed bottom-20 right-4 z-40 md:hidden bg-rose-500 text-white p-4 rounded-full shadow-lg shadow-rose-300 animate-bounce"
+		class="fixed bottom-16 right-4 z-40 md:hidden bg-rose-500 text-white p-4 rounded-full shadow-lg shadow-rose-300 animate-bounce"
 	>
 		<ShoppingCart size={24} />
 		<span class="absolute -top-1 -right-1 bg-amber-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
@@ -262,7 +262,7 @@
 {#if showMobileCart}
 	<div class="fixed inset-0 z-50 md:hidden">
 		<div class="absolute inset-0 bg-black/50" onclick={() => (showMobileCart = false)}></div>
-		<div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[80vh] flex flex-col">
+		<div class="absolute bottom-16 left-0 right-0 bg-white rounded-t-3xl max-h-[80vh] flex flex-col">
 			<div class="flex items-center justify-between p-4 border-b border-rose-100">
 				<h2 class="font-semibold text-rose-900">Keranjang</h2>
 				<button onclick={() => (showMobileCart = false)} class="p-2 hover:bg-rose-50 rounded-full">
