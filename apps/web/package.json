@@ -41,5 +41,8 @@
 		"vite": "^8.0.7",
 		"vitest": "^4.1.4",
 		"wrangler": "^4.81.0"
+	},
+	"dependencies": {
+		"idb": "^8.0.3"
 	}
 }
