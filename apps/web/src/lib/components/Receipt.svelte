@@ -68,7 +68,7 @@
 				<div class="print-item" style="padding-left: 8px;">
 					<span></span>
 					<span class="print-item-price"
-						>{formatCurrency(item.unitPriceAtOrder * item.quantity)}</span
+						>{formatCurrency((item.unitPriceAtOrder || item.unitPrice || 0) * (item.quantity || 1))}</span
 					>
 				</div>
 			{/each}
