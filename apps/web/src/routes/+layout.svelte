@@ -14,7 +14,7 @@
 	} from 'lucide-svelte';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import { isAuthenticated, logout } from '$lib/api/client';
+	import { isAuthenticated, logout, getCurrentUserName, getCurrentUserRole } from '$lib/api/client';
 	import { goto } from '$app/navigation';
 
 	let { children } = $props();
@@ -85,8 +85,8 @@
 			</button>
 			<div class="flex items-center gap-2 pl-2 border-l border-rose-100">
 				<div class="hidden sm:block text-right">
-					<p class="text-xs font-medium text-rose-900 leading-none">Mbak Xioma</p>
-					<p class="text-[10px] text-rose-400">Owner</p>
+					<p class="text-xs font-medium text-rose-900 leading-none">{getCurrentUserName()}</p>
+					<p class="text-[10px] text-rose-400 capitalize">{getCurrentUserRole()}</p>
 				</div>
 				<div
 					class="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-500 border border-rose-200 overflow-hidden"
@@ -156,13 +156,6 @@
 				{/if}
 			</a>
 		{/each}
-		<a
-			href="/profile"
-			class="flex flex-col items-center justify-center gap-1 w-16 h-12 rounded-xl text-rose-300"
-		>
-			<User size={20} />
-			<span class="text-[10px] font-medium">Profil</span>
-		</a>
 	</nav>
 </div>
 

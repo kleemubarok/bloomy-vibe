@@ -72,9 +72,49 @@ export async function login(email: string, pin: string): Promise<{ token: string
 
 export function logout(): void {
 	removeAuthToken();
+	removeCurrentUser();
 	if (typeof window !== 'undefined') {
 		window.location.href = '/login';
 	}
+}
+
+export interface CurrentUser {
+	id: number;
+	name: string;
+	role: string;
+}
+
+const USER_KEY = 'current_user';
+
+export function setCurrentUser(user: CurrentUser): void {
+	if (typeof sessionStorage === 'undefined') return;
+	sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
+export function getCurrentUser(): CurrentUser | null {
+	if (typeof sessionStorage === 'undefined') return null;
+	const stored = sessionStorage.getItem(USER_KEY);
+	if (!stored) return null;
+	try {
+		return JSON.parse(stored) as CurrentUser;
+	} catch {
+		return null;
+	}
+}
+
+export function getCurrentUserName(): string {
+	const user = getCurrentUser();
+	return user?.name || 'Guest';
+}
+
+export function getCurrentUserRole(): string {
+	const user = getCurrentUser();
+	return user?.role || 'staff';
+}
+
+function removeCurrentUser(): void {
+	if (typeof sessionStorage === 'undefined') return;
+	sessionStorage.removeItem(USER_KEY);
 }
 
 export async function getOrders(status?: string[]): Promise<Order[]> {

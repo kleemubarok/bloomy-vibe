@@ -226,7 +226,7 @@
 			<div class="bg-white rounded-2xl p-4 border border-rose-100">
 				<div class="flex items-center gap-2 text-rose-400 mb-2">
 					<DollarSign size={18} />
-					<span class="text-xs font-medium">Revenue</span>
+					<span class="text-xs font-medium">Revenue (Rp)</span>
 				</div>
 				<p class="text-xl font-bold text-rose-900">{formatCurrency(summary.totalRevenue)}</p>
 			</div>
@@ -452,7 +452,7 @@
 							<span class="font-medium">{summary.totalOrders}</span>
 						</div>
 						<div class="flex justify-between">
-							<span class="text-rose-600">Revenue</span>
+							<span class="text-rose-600">Revenue (Rp)</span>
 							<span class="font-medium">{formatCurrency(summary.totalRevenue)}</span>
 						</div>
 						<div class="flex justify-between">
