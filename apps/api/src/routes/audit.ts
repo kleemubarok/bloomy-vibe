@@ -149,8 +149,10 @@ audit.get('/order/:id', verifyAuth, async (c) => {
       .where(eq(schema.orderItems.orderId, id));
 
     const formattedItems = (itemsResult || []).map((i: any) => {
-      const qty = i.order_items?.quantity || 1;
-      const price = i.order_items?.unit_price_at_order || 0;
+      const rawQty = i.order_items?.quantity;
+      const rawPrice = i.order_items?.unit_price_at_order;
+      const qty = (typeof rawQty === 'number') ? rawQty : (parseInt(rawQty) || 1);
+      const price = (typeof rawPrice === 'number') ? rawPrice : (parseInt(rawPrice) || 0);
       return {
         id: i.order_items?.id,
         productName: i.products?.name || 'Product #' + (i.order_items?.productId || 0),

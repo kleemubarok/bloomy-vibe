@@ -76,13 +76,11 @@ orders.post('/', verifyAuth, async (c) => {
     throw new HTTPException(400, { message: 'Customer name is required' });
   }
 
-  const now = Date.now();
   const [newOrder] = await db.insert(schema.orders).values({
     customerName: body.customerName,
     customerWhatsapp: body.customerWhatsapp,
     status: body.status || 'Draft',
     orderType: body.orderType || 'POS',
-    createdAt: now,
     deliveryDate: body.deliveryDate ? new Date(body.deliveryDate) : undefined,
     messageCard: body.messageCard,
     senderName: body.senderName,
