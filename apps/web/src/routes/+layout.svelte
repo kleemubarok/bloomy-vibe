@@ -131,20 +131,7 @@
 			{/each}
 		</nav>
 
-		<div class="mt-auto p-4 bg-rose-50 rounded-2xl border border-rose-100">
-			<div class="flex items-center gap-3 mb-2">
-				<div
-					class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-rose-500 shadow-sm"
-				>
-					<WifiOff size={16} />
-				</div>
-				<span class="text-xs font-semibold text-rose-900">Offline Ready</span>
-			</div>
-			<p class="text-[10px] text-rose-400 leading-tight">
-				Aplikasi ini berjalan secara lokal & akan sinkron saat online.
-			</p>
-		</div>
-	</aside>
+		</aside>
 
 	<!-- Main Content -->
 	<main class="flex-1 p-4 md:p-8 animate-in fade-in duration-500">
