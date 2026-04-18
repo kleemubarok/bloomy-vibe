@@ -16,8 +16,6 @@
 	import { onMount } from 'svelte';
 	import { isAuthenticated, logout } from '$lib/api/client';
 	import { goto } from '$app/navigation';
-	import { initOnlineDetection } from '$lib/offline/online';
-	import { startAutoSync, stopAutoSync } from '$lib/offline/sync';
 	import SyncStatus from '$lib/components/SyncStatus.svelte';
 
 	let { children } = $props();
@@ -36,9 +34,6 @@
 
 		if (!isPublicRoute && !isAuthenticated()) {
 			goto('/login');
-		} else if (isAuthenticated()) {
-			initOnlineDetection();
-			startAutoSync();
 		}
 	});
 
@@ -77,7 +72,7 @@
 		</div>
 
 		<div class="flex items-center gap-3">
-			<SyncStatus />
+			{#if false}<SyncStatus />{/if}
 			<button class="p-2 rounded-full text-rose-400 hover:bg-rose-50 transition-colors relative">
 				<Bell size={20} />
 				<span class="absolute top-1 right-1 w-2 h-2 bg-rose-600 rounded-full border border-white"
