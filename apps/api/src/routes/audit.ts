@@ -58,39 +58,73 @@ audit.get('/orders', verifyAuth, async (c) => {
       .orderBy(desc(schema.orders.createdAt))
       .limit(limit);
 
-    const ordersWithItems = await Promise.all(orders.map(async (o: any) => {
-      const items = await db
-        .select({
-          productName: schema.orderItems.productName,
-          quantity: schema.orderItems.quantity,
-          unitPrice: schema.orderItems.unitPrice,
-          totalPrice: schema.orderItems.totalPrice,
-        })
-        .from(schema.orderItems)
-        .where(eq(schema.orderItems.orderId, o.id));
-
-      return {
-        id: o.id,
-        customerName: o.customerName,
-        customerWhatsapp: o.customerWhatsapp,
-        totalAmount: o.totalAmount,
-        totalHppSnapshot: o.totalHppSnapshot,
-        paymentStatus: o.paymentStatus,
-        status: o.status,
-        createdAt: o.createdAt,
-        items: items.map((i: any) => ({
-          productName: i.productName,
-          quantity: i.quantity,
-          unitPrice: i.unitPrice,
-          totalPrice: i.totalPrice,
-        })),
-        profit: o.paymentStatus === 'Paid' && o.totalHppSnapshot ? Number(o.totalAmount) - Number(o.totalHppSnapshot) : null,
-      };
+    const ordersWithItems = orders.map((o: any) => ({
+      id: o.id,
+      customerName: o.customerName,
+      customerWhatsapp: o.customerWhatsapp,
+      totalAmount: o.totalAmount,
+      totalHppSnapshot: o.totalHppSnapshot,
+      paymentStatus: o.paymentStatus,
+      status: o.status,
+      createdAt: o.createdAt,
+      profit: o.totalHppSnapshot ? Number(o.totalAmount) - Number(o.totalHppSnapshot) : null,
     }));
 
     return c.json(ordersWithItems);
   } catch (e) {
     console.error('Audit orders error:', e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+audit.get('/order/:id', verifyAuth, async (c) => {
+  const db = getDb(c.env.DB);
+  const id = c.req.param('id');
+
+  try {
+    const [order] = await db
+      .select({
+        id: schema.orders.id,
+        customerName: schema.orders.customerName,
+        customerWhatsapp: schema.orders.customerWhatsapp,
+        totalAmount: schema.orders.totalAmount,
+        totalHppSnapshot: schema.orders.totalHppSnapshot,
+        paymentStatus: schema.orders.paymentStatus,
+        status: schema.orders.status,
+        createdAt: schema.orders.createdAt,
+      })
+      .from(schema.orders)
+      .where(eq(schema.orders.id, id))
+      .limit(1);
+
+    if (!order) {
+      return c.json({ error: 'Order not found' }, 404);
+    }
+
+    const items = await db
+      .select({
+        id: schema.orderItems.id,
+        productName: schema.orderItems.productName,
+        quantity: schema.orderItems.quantity,
+        unitPrice: schema.orderItems.unitPrice,
+        totalPrice: schema.orderItems.totalPrice,
+      })
+      .from(schema.orderItems)
+      .where(eq(schema.orderItems.orderId, id));
+
+    return c.json({
+      ...order,
+      items: items.map((i: any) => ({
+        id: i.id,
+        productName: i.productName,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        totalPrice: i.totalPrice,
+      })),
+      profit: order.totalHppSnapshot ? Number(order.totalAmount) - Number(order.totalHppSnapshot) : null,
+    });
+  } catch (e) {
+    console.error('Audit order detail error:', e);
     return c.json({ error: String(e) }, 500);
   }
 });

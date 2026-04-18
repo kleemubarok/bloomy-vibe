@@ -77,9 +77,19 @@
 		else if (tab === 'inventory') fetchInventory();
 	}
 
-	function openOrderDetail(order: any) {
-		selectedOrder = order;
-		showOrderDetail = true;
+	async function openOrderDetail(order: any) {
+		isLoading = true;
+		try {
+			const res = await fetchWithAuth(`/audit/order/${order.id}`);
+			if (res.ok) {
+				selectedOrder = await res.json();
+				showOrderDetail = true;
+			}
+		} catch (e) {
+			console.error(e);
+		} finally {
+			isLoading = false;
+		}
 	}
 
 	function formatCurrency(amount: number): string {
