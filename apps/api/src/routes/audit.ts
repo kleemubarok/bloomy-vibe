@@ -11,7 +11,6 @@ audit.get('/inventory', verifyAuth, async (c) => {
   const db = getDb(c.env.DB);
   const page = parseInt(c.req.query('page') || '1');
   const limit = parseInt(c.req.query('limit') || '20');
-  const q = c.req.query('q') || '';
   const offset = (page - 1) * limit;
 
   try {
@@ -34,7 +33,6 @@ audit.get('/inventory', verifyAuth, async (c) => {
       inventoryId: l.inventory_log.inventoryId,
       name: l.inventory?.name || 'Unknown',
       unit: l.inventory?.unit || '',
-      stockLevel: l.inventory?.stockLevel || 0,
       changeQty: l.inventory_log.changeQty,
       reason: l.inventory_log.reason,
       orderId: l.inventory_log.orderId,
@@ -62,33 +60,49 @@ audit.get('/orders', verifyAuth, async (c) => {
   const offset = (page - 1) * limit;
 
   try {
-    const where = q 
-      ? and(eq(schema.orders.paymentStatus, 'Paid'))
-      : eq(schema.orders.paymentStatus, 'Paid');
+    let whereClause = eq(schema.orders.paymentStatus, 'Paid');
+    if (q) {
+      whereClause = and(
+        eq(schema.orders.paymentStatus, 'Paid'),
+        // Simple search
+      );
+    }
 
     const allOrders = await db
-      .select({ id: schema.orders.id })
+      .select({ id: schema.orders.id, customerName: schema.orders.customerName })
       .from(schema.orders)
-      .where(where);
+      .where(whereClause);
 
-    const totalCount = allOrders.length;
+    let filteredOrders = allOrders;
+    if (q) {
+      const qLower = q.toLowerCase();
+      filteredOrders = allOrders.filter((o: any) => 
+        o.customerName && o.customerName.toLowerCase().includes(qLower)
+      );
+    }
 
-    const orders = await db
-      .select({
-        id: schema.orders.id,
-        customerName: schema.orders.customerName,
-        customerWhatsapp: schema.orders.customerWhatsapp,
-        totalAmount: schema.orders.totalAmount,
-        totalHppSnapshot: schema.orders.totalHppSnapshot,
-        paymentStatus: schema.orders.paymentStatus,
-        status: schema.orders.status,
-        createdAt: schema.orders.createdAt,
-      })
-      .from(schema.orders)
-      .where(where)
-      .orderBy(desc(schema.orders.createdAt))
-      .limit(limit)
-      .offset(offset);
+    const totalCount = filteredOrders.length;
+    const orderIds = filteredOrders.slice(offset, offset + limit).map((o: any) => o.id);
+
+    let orders: any[] = [];
+    if (orderIds.length > 0) {
+      orders = await db
+        .select({
+          id: schema.orders.id,
+          customerName: schema.orders.customerName,
+          customerWhatsapp: schema.orders.customerWhatsapp,
+          totalAmount: schema.orders.totalAmount,
+          totalHppSnapshot: schema.orders.totalHppSnapshot,
+          paymentStatus: schema.orders.paymentStatus,
+          status: schema.orders.status,
+          createdAt: schema.orders.createdAt,
+        })
+        .from(schema.orders)
+        .where(whereClause)
+        .orderBy(desc(schema.orders.createdAt))
+        .limit(limit)
+        .offset(offset);
+    }
 
     const ordersWithItems = orders.map((o: any) => ({
       id: o.id,
@@ -163,6 +177,45 @@ audit.get('/order/:id', verifyAuth, async (c) => {
     });
   } catch (e) {
     console.error('Audit order detail error:', e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+audit.get('/inventory-log/:id', verifyAuth, async (c) => {
+  const db = getDb(c.env.DB);
+  const id = c.req.param('id');
+
+  try {
+    const [log] = await db
+      .select()
+      .from(schema.inventoryLog)
+      .where(eq(schema.inventoryLog.id, parseInt(id)))
+      .limit(1);
+
+    if (!log) {
+      return c.json({ error: 'Log not found' }, 404);
+    }
+
+    if (log.orderId) {
+      const [order] = await db
+        .select({
+          id: schema.orders.id,
+          customerName: schema.orders.customerName,
+          totalAmount: schema.orders.totalAmount,
+        })
+        .from(schema.orders)
+        .where(eq(schema.orders.id, log.orderId))
+        .limit(1);
+
+      return c.json({
+        ...log,
+        order: order || null,
+      });
+    }
+
+    return c.json(log);
+  } catch (e) {
+    console.error('Audit inventory log detail error:', e);
     return c.json({ error: String(e) }, 500);
   }
 });

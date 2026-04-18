@@ -23,6 +23,8 @@
 
 	let selectedOrder = $state<any>(null);
 	let showOrderDetail = $state(false);
+	let selectedInventoryLog = $state<any>(null);
+	let showInventoryLogDetail = $state(false);
 
 	onMount(async () => {
 		await fetchSummary();
@@ -92,6 +94,22 @@
 			if (res.ok) {
 				selectedOrder = await res.json();
 				showOrderDetail = true;
+			}
+		} catch (e) {
+			console.error(e);
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	async function openInventoryLogDetail(log: any) {
+		if (!log.orderId) return;
+		isLoading = true;
+		try {
+			const res = await fetchWithAuth(`/audit/inventory-log/${log.id}`);
+			if (res.ok) {
+				selectedInventoryLog = await res.json();
+				showInventoryLogDetail = true;
 			}
 		} catch (e) {
 			console.error(e);
@@ -264,39 +282,30 @@
 		</div>
 	{:else if activeTab === 'inventory' && inventoryLogs.length > 0}
 		<div class="space-y-3">
-			<div class="flex gap-2">
-				<input
-					type="text"
-					bind:value={inventorySearch}
-					placeholder="Cari bahan..."
-					class="flex-1 px-3 py-2 rounded-lg border border-rose-200 text-sm"
-					onkeydown={(e) => e.key === 'Enter' && fetchInventory()}
-				/>
-				<button class="px-3 py-2 bg-rose-100 text-rose-600 rounded-lg" onclick={fetchInventory}>Cari</button>
-			</div>
 			<div class="space-y-2">
 				{#each inventoryLogs as log (log.id)}
-					<div class="bg-white rounded-xl p-4 border border-rose-100">
+					<button
+						class="w-full bg-white rounded-xl p-4 border border-rose-100 text-left hover:bg-rose-50 {log.orderId ? '' : 'opacity-60'}"
+						onclick={() => openInventoryLogDetail(log)}
+						disabled={!log.orderId}
+					>
 						<div class="flex justify-between items-start">
 							<div>
 								<p class="font-medium text-rose-900">{log.name}</p>
 								<p class="text-xs text-rose-400">
 									{log.reason} • {formatDate(log.createdAt)}
-									{#if log.orderId}
-										<span class="ml-1 text-rose-500">#{log.orderId.slice(0, 8)}</span>
-									{/if}
 								</p>
 							</div>
 							<div class="text-right">
 								<p class="font-medium {log.changeQty > 0 ? 'text-green-600' : 'text-red-600'}">
 									{log.changeQty > 0 ? '+' : ''}{log.changeQty}
 								</p>
-								<p class="text-xs text-rose-400">
-									{log.stockLevel} {log.unit}
-								</p>
 							</div>
 						</div>
-					</div>
+						{#if log.orderId}
+							<p class="text-xs text-rose-500 mt-1">#{log.orderId.slice(0, 8)} - 点击查看详情</p>
+						{/if}
+					</button>
 				{/each}
 			</div>
 			<div class="flex justify-center gap-2">
@@ -443,6 +452,24 @@
 			>
 				Cetak
 			</button>
+		</div>
+	</div>
+{/if}
+
+{#if showInventoryLogDetail && selectedInventoryLog}
+	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onclick={() => (showInventoryLogDetail = false)}>
+		<div class="bg-white rounded-2xl p-4 max-w-sm w-full" onclick={(e) => e.stopPropagation()}>
+			<div class="flex justify-between items-center mb-4">
+				<h2 class="font-bold text-rose-900">Inventory Log</h2>
+				<button class="text-rose-400" onclick={() => (showInventoryLogDetail = false)}><X size={20} /></button>
+			</div>
+			{#if selectedInventoryLog.order}
+				<div class="space-y-3">
+					<div><p class="text-xs text-rose-400">Order</p><p class="font-medium">{selectedInventoryLog.order.customerName}</p></div>
+					<div><p class="text-xs text-rose-400">Total</p><p class="font-medium">{formatCurrency(selectedInventoryLog.order.totalAmount)}</p></div>
+					<button class="w-full mt-4 py-2 bg-rose-500 text-white rounded-xl font-medium" onclick={() => { showInventoryLogDetail = false; openOrderDetail(selectedInventoryLog.order); }}>Lihat Detail Order</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
