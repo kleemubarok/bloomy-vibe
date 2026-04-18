@@ -10,8 +10,7 @@
 		WifiOff,
 		Bell,
 		LogOut,
-		Link,
-		Clock
+		Link
 	} from 'lucide-svelte';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
@@ -23,7 +22,6 @@
 	const navItems = [
 		{ name: 'Dashboard', icon: Home, href: '/dashboard' },
 		{ name: 'POS', icon: ShoppingCart, href: '/pos' },
-		{ name: 'Pending', icon: Clock, href: '/pos/pending' },
 		{ name: 'Self-Order', icon: Link, href: '/self-order' },
 		{ name: 'Inventory', icon: Package, href: '/inventory' },
 		{ name: 'Riwayat', icon: History, href: '/audit' }
@@ -119,9 +117,7 @@
 
 		<nav class="flex-1 space-y-1">
 			{#each navItems as item}
-				{@const active = item.name === 'Pending' 
-					? page.url.pathname === '/pos/pending' 
-					: page.url.pathname.startsWith(item.href)}
+				{@const active = page.url.pathname.startsWith(item.href)}
 				<a
 					href={item.href}
 					class="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 group
@@ -160,9 +156,7 @@
 		class="fixed bottom-0 left-0 right-0 h-16 glass border-t border-rose-100 md:hidden flex items-center justify-around px-2 z-50"
 	>
 		{#each navItems as item}
-			{@const active = item.name === 'Pending' 
-				? page.url.pathname === '/pos/pending' 
-				: page.url.pathname.startsWith(item.href)}
+			{@const active = page.url.pathname.startsWith(item.href)}
 			<a
 				href={item.href}
 				class="flex flex-col items-center justify-center gap-1 w-16 h-12 rounded-xl transition-all

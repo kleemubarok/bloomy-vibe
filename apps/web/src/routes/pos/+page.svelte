@@ -15,7 +15,8 @@
 	import Cart from '$lib/components/Cart.svelte';
 	import ProductGrid from '$lib/components/ProductGrid.svelte';
 	import PrintPreview from '$lib/components/PrintPreview.svelte';
-	import { CheckCircle, X } from 'lucide-svelte';
+	import { CheckCircle, X, Clock } from 'lucide-svelte';
+	import { goto } from '$app/navigation';
 
 	let products = $state<Product[]>([]);
 	let isLoadingProducts = $state(true);
@@ -147,6 +148,18 @@
 <svelte:head>
 	<title>POS - Bloomy POS</title>
 </svelte:head>
+
+<div class="flex items-center justify-between mb-4">
+	<h1 class="text-2xl font-bold text-rose-900">POS</h1>
+	<button
+		class="flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-700 rounded-xl text-sm font-medium hover:bg-amber-200 transition-colors"
+		onclick={() => goto('/pos/pending')}
+		type="button"
+	>
+		<Clock size={18} />
+		Pending
+	</button>
+</div>
 
 {#if showSuccess}
 	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

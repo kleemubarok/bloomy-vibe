@@ -16,8 +16,8 @@
 
 	const nextAction = $derived(getNextStatus(order.status));
 	const statusColor = $derived(getStatusColor(order.status));
-	const isPendingPayment = $derived(order.status === 'Selesai' && order.paymentStatus === 'Pending');
-	const canSerahTerima = $derived(order.status === 'Selesai' && order.paymentStatus === 'Paid');
+	const isPendingPayment = $derived(order.paymentStatus === 'Pending');
+	const showPayButton = $derived(order.paymentStatus === 'Pending');
 
 	function goToPendingPayment() {
 		if (browser) {
@@ -134,7 +134,7 @@
 		</div>
 	{/if}
 
-	{#if isPendingPayment}
+	{#if showPayButton}
 		<div class="px-4 pb-4">
 			<button
 				class="w-full py-2 px-4 rounded-xl font-medium text-sm transition-all bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-2"
@@ -153,10 +153,9 @@
 					? 'bg-blue-500 hover:bg-blue-600 text-white'
 					: order.status === 'Dirangkai'
 						? 'bg-green-500 hover:bg-green-600 text-white'
-						: 'bg-rose-500 hover:bg-rose-600 text-white'}
-					{!canSerahTerima ? 'opacity-50 cursor-not-allowed' : ''}"
+						: 'bg-rose-500 hover:bg-rose-600 text-white'}"
 				onclick={handleStatusUpdate}
-				disabled={isUpdating || !canSerahTerima}
+				disabled={isUpdating}
 				type="button"
 			>
 				{#if isUpdating}
@@ -168,9 +167,6 @@
 					{nextAction.label}
 				{/if}
 			</button>
-			{#if !canSerahTerima && order.status === 'Selesai'}
-				<p class="text-xs text-rose-400 text-center mt-1">Belum lunas</p>
-			{/if}
 		</div>
 	{/if}
 </div>
