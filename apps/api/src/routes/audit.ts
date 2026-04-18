@@ -60,18 +60,13 @@ audit.get('/orders', verifyAuth, async (c) => {
   const offset = (page - 1) * limit;
 
   try {
-    let whereClause = eq(schema.orders.paymentStatus, 'Paid');
-    if (q) {
-      whereClause = and(
-        eq(schema.orders.paymentStatus, 'Paid'),
-        // Simple search
-      );
-    }
-
     const allOrders = await db
-      .select({ id: schema.orders.id, customerName: schema.orders.customerName })
+      .select({
+        id: schema.orders.id,
+        customerName: schema.orders.customerName,
+      })
       .from(schema.orders)
-      .where(whereClause);
+      .where(eq(schema.orders.paymentStatus, 'Paid'));
 
     let filteredOrders = allOrders;
     if (q) {
@@ -82,10 +77,11 @@ audit.get('/orders', verifyAuth, async (c) => {
     }
 
     const totalCount = filteredOrders.length;
-    const orderIds = filteredOrders.slice(offset, offset + limit).map((o: any) => o.id);
+    const paginatedOrders = filteredOrders.slice(offset, offset + limit);
 
     let orders: any[] = [];
-    if (orderIds.length > 0) {
+    if (paginatedOrders.length > 0) {
+      const ids = paginatedOrders.map((o: any) => o.id);
       orders = await db
         .select({
           id: schema.orders.id,
@@ -98,10 +94,9 @@ audit.get('/orders', verifyAuth, async (c) => {
           createdAt: schema.orders.createdAt,
         })
         .from(schema.orders)
-        .where(whereClause)
+        .where(eq(schema.orders.paymentStatus, 'Paid'))
         .orderBy(desc(schema.orders.createdAt))
-        .limit(limit)
-        .offset(offset);
+        .limit(limit);
     }
 
     const ordersWithItems = orders.map((o: any) => ({
@@ -162,7 +157,7 @@ audit.get('/order/:id', verifyAuth, async (c) => {
         totalPrice: schema.orderItems.totalPrice,
       })
       .from(schema.orderItems)
-      .where(eq(schema.orderItems.orderId, id));
+      .where(eq(schema.orderItems.orderId, id)));
 
     return c.json({
       ...order,

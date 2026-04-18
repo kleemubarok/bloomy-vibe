@@ -244,24 +244,25 @@
 				/>
 				<button class="px-3 py-2 bg-rose-100 text-rose-600 rounded-lg" onclick={fetchOrders}>Cari</button>
 			</div>
-			<div class="space-y-2">
-				{#each orders as order (order.id)}
-					<button
-						class="w-full bg-white rounded-xl p-4 border border-rose-100 flex justify-between items-center hover:bg-rose-50"
-						onclick={() => openOrderDetail(order)}
-					>
-						<div class="text-left">
+<div class="space-y-2">
+			{#each orders as order (order.id)}
+				<button
+					class="w-full bg-white rounded-xl p-4 border border-rose-100 hover:bg-rose-50 text-left"
+					onclick={() => openOrderDetail(order)}
+				>
+					<div class="flex justify-between items-start">
+						<div>
 							<p class="font-medium text-rose-900">{order.customerName}</p>
 							<p class="text-xs text-rose-400">{formatDate(order.createdAt)}</p>
 						</div>
 						<div class="text-right">
 							<p class="font-medium text-rose-900">{formatCurrency(order.totalAmount)}</p>
-							<p class="text-xs text-green-600">+{formatCurrency(order.profit)}</p>
+							<p class="text-xs text-green-600">Profit: +{formatCurrency(order.profit)}</p>
 						</div>
-						<ChevronRight size={18} class="text-rose-300 ml-2" />
-					</button>
-				{/each}
-			</div>
+					</div>
+				</button>
+			{/each}
+		</div>
 			<div class="flex justify-center gap-2">
 				<button
 					class="px-3 py-1 rounded bg-rose-100 text-rose-600 disabled:opacity-50"
@@ -303,7 +304,7 @@
 							</div>
 						</div>
 						{#if log.orderId}
-							<p class="text-xs text-rose-500 mt-1">#{log.orderId.slice(0, 8)} - 点击查看详情</p>
+							<p class="text-xs text-rose-500 mt-1">#{log.orderId.slice(0, 8)} - Klik untuk detail</p>
 						{/if}
 					</button>
 				{/each}
