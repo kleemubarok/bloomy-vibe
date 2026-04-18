@@ -23,7 +23,7 @@ export function isAuthenticated(): boolean {
 	return !!getAuthToken();
 }
 
-async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
 	const token = getAuthToken();
 	const headers: Record<string, string> = {
 		'Content-Type': 'application/json',
