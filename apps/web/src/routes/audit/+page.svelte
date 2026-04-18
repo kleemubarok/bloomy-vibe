@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { fetchWithAuth } from '$lib/api/client';
 	import { Printer, TrendingUp, Package, DollarSign, X, ChevronRight } from 'lucide-svelte';
-	import { triggerPrint, formatCurrency } from '$lib/print/utils';
+	import { triggerPrint } from '$lib/print/utils';
 	import Receipt from '$lib/components/Receipt.svelte';
 
 	let activeTab = $state<'summary' | 'orders' | 'inventory'>('summary');
