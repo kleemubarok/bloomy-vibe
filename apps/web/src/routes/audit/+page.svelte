@@ -8,12 +8,18 @@
 	let isLoading = $state(true);
 	let showPrintPreview = $state(false);
 
-	let fromDate = $state('');
-	let toDate = $state('');
+	let summaryPeriod = $state('today');
 
 	let summary = $state<{ totalOrders: number; totalRevenue: number; totalHpp: number; totalProfit: number } | null>(null);
 	let orders = $state<any[]>([]);
 	let inventoryLogs = $state<any[]>([]);
+
+	let ordersPage = $state(1);
+	let ordersTotalPages = $state(1);
+	let ordersSearch = $state('');
+	let inventoryPage = $state(1);
+	let inventoryTotalPages = $state(1);
+	let inventorySearch = $state('');
 
 	let selectedOrder = $state<any>(null);
 	let showOrderDetail = $state(false);
@@ -25,13 +31,7 @@
 	async function fetchSummary() {
 		isLoading = true;
 		try {
-			let url = '/audit/summary';
-			const params = new URLSearchParams();
-			if (fromDate) params.set('from', fromDate);
-			if (toDate) params.set('to', toDate);
-			if (params.toString()) url += '?' + params.toString();
-
-			const res = await fetchWithAuth(url);
+			const res = await fetchWithAuth(`/audit/summary?period=${summaryPeriod}`);
 			if (res.ok) {
 				summary = await res.json();
 			}
@@ -45,9 +45,13 @@
 	async function fetchOrders() {
 		isLoading = true;
 		try {
-			const res = await fetchWithAuth('/audit/orders?limit=100');
+			let url = `/audit/orders?page=${ordersPage}&limit=20`;
+			if (ordersSearch) url += `&q=${encodeURIComponent(ordersSearch)}`;
+			const res = await fetchWithAuth(url);
 			if (res.ok) {
-				orders = await res.json();
+				const data = await res.json();
+				orders = data.data;
+				ordersTotalPages = data.totalPages;
 			}
 		} catch (e) {
 			console.error(e);
@@ -59,9 +63,13 @@
 	async function fetchInventory() {
 		isLoading = true;
 		try {
-			const res = await fetchWithAuth('/audit/inventory?limit=100');
+			let url = `/audit/inventory?page=${inventoryPage}&limit=20`;
+			if (inventorySearch) url += `&q=${encodeURIComponent(inventorySearch)}`;
+			const res = await fetchWithAuth(url);
 			if (res.ok) {
-				inventoryLogs = await res.json();
+				const data = await res.json();
+				inventoryLogs = data.data;
+				inventoryTotalPages = data.totalPages;
 			}
 		} catch (e) {
 			console.error(e);
@@ -156,25 +164,17 @@
 
 	{#if activeTab === 'summary'}
 		<div class="flex gap-2 items-center bg-white p-3 rounded-xl border border-rose-100">
-			<input
-				type="date"
-				bind:value={fromDate}
-				class="px-3 py-2 rounded-lg border border-rose-200 text-sm"
-				placeholder="Dari"
-			/>
-			<span class="text-rose-400">-</span>
-			<input
-				type="date"
-				bind:value={toDate}
-				class="px-3 py-2 rounded-lg border border-rose-200 text-sm"
-				placeholder="Sampai"
-			/>
-			<button
-				class="px-4 py-2 bg-rose-500 text-white rounded-lg text-sm font-medium"
-				onclick={fetchSummary}
+			<select
+				bind:value={summaryPeriod}
+				onchange={fetchSummary}
+				class="px-3 py-2 rounded-lg border border-rose-200 text-sm bg-white"
 			>
-				Filter
-			</button>
+				<option value="today">Today</option>
+				<option value="this_week">This Week</option>
+				<option value="this_month">This Month</option>
+				<option value="last_month">Last Month</option>
+				<option value="all">All Time</option>
+			</select>
 		</div>
 	{/if}
 
@@ -212,49 +212,107 @@
 			</div>
 		</div>
 	{:else if activeTab === 'orders' && orders.length > 0}
-		<div class="space-y-2">
-			{#each orders as order (order.id)}
-				<button
-					class="w-full bg-white rounded-xl p-4 border border-rose-100 flex justify-between items-center hover:bg-rose-50"
-					onclick={() => openOrderDetail(order)}
-				>
-					<div class="text-left">
-						<p class="font-medium text-rose-900">{order.customerName}</p>
-						<p class="text-xs text-rose-400">{formatDate(order.createdAt)}</p>
-					</div>
-					<div class="text-right">
-						<p class="font-medium text-rose-900">{formatCurrency(order.totalAmount)}</p>
-						<p class="text-xs text-green-600">+{formatCurrency(order.profit)}</p>
-					</div>
-					<ChevronRight size={18} class="text-rose-300 ml-2" />
-				</button>
-			{/each}
-		</div>
-	{:else if activeTab === 'inventory' && inventoryLogs.length > 0}
-		<div class="space-y-2">
-			{#each inventoryLogs as log (log.id)}
-				<div class="bg-white rounded-xl p-4 border border-rose-100">
-					<div class="flex justify-between items-start">
-						<div>
-							<p class="font-medium text-rose-900">{log.name}</p>
-							<p class="text-xs text-rose-400">
-								{log.reason} • {formatDate(log.createdAt)}
-								{#if log.orderId}
-									<span class="ml-1 text-rose-500">#{log.orderId.slice(0, 8)}</span>
-								{/if}
-							</p>
+		<div class="space-y-3">
+			<div class="flex gap-2">
+				<input
+					type="text"
+					bind:value={ordersSearch}
+					placeholder="Cari customer..."
+					class="flex-1 px-3 py-2 rounded-lg border border-rose-200 text-sm"
+					onkeydown={(e) => e.key === 'Enter' && fetchOrders()}
+				/>
+				<button class="px-3 py-2 bg-rose-100 text-rose-600 rounded-lg" onclick={fetchOrders}>Cari</button>
+			</div>
+			<div class="space-y-2">
+				{#each orders as order (order.id)}
+					<button
+						class="w-full bg-white rounded-xl p-4 border border-rose-100 flex justify-between items-center hover:bg-rose-50"
+						onclick={() => openOrderDetail(order)}
+					>
+						<div class="text-left">
+							<p class="font-medium text-rose-900">{order.customerName}</p>
+							<p class="text-xs text-rose-400">{formatDate(order.createdAt)}</p>
 						</div>
 						<div class="text-right">
-							<p class="font-medium {log.changeQty > 0 ? 'text-green-600' : 'text-red-600'}">
-								{log.changeQty > 0 ? '+' : ''}{log.changeQty}
-							</p>
-							<p class="text-xs text-rose-400">
-								{log.stockLevel} {log.unit}
-							</p>
+							<p class="font-medium text-rose-900">{formatCurrency(order.totalAmount)}</p>
+							<p class="text-xs text-green-600">+{formatCurrency(order.profit)}</p>
+						</div>
+						<ChevronRight size={18} class="text-rose-300 ml-2" />
+					</button>
+				{/each}
+			</div>
+			<div class="flex justify-center gap-2">
+				<button
+					class="px-3 py-1 rounded bg-rose-100 text-rose-600 disabled:opacity-50"
+					disabled={ordersPage <= 1}
+					onclick={() => { ordersPage--; fetchOrders(); }}
+				>
+					&lt;
+				</button>
+				<span class="px-3 py-1">{ordersPage} / {ordersTotalPages}</span>
+				<button
+					class="px-3 py-1 rounded bg-rose-100 text-rose-600 disabled:opacity-50"
+					disabled={ordersPage >= ordersTotalPages}
+					onclick={() => { ordersPage++; fetchOrders(); }}
+				>
+					&gt;
+				</button>
+			</div>
+		</div>
+	{:else if activeTab === 'inventory' && inventoryLogs.length > 0}
+		<div class="space-y-3">
+			<div class="flex gap-2">
+				<input
+					type="text"
+					bind:value={inventorySearch}
+					placeholder="Cari bahan..."
+					class="flex-1 px-3 py-2 rounded-lg border border-rose-200 text-sm"
+					onkeydown={(e) => e.key === 'Enter' && fetchInventory()}
+				/>
+				<button class="px-3 py-2 bg-rose-100 text-rose-600 rounded-lg" onclick={fetchInventory}>Cari</button>
+			</div>
+			<div class="space-y-2">
+				{#each inventoryLogs as log (log.id)}
+					<div class="bg-white rounded-xl p-4 border border-rose-100">
+						<div class="flex justify-between items-start">
+							<div>
+								<p class="font-medium text-rose-900">{log.name}</p>
+								<p class="text-xs text-rose-400">
+									{log.reason} • {formatDate(log.createdAt)}
+									{#if log.orderId}
+										<span class="ml-1 text-rose-500">#{log.orderId.slice(0, 8)}</span>
+									{/if}
+								</p>
+							</div>
+							<div class="text-right">
+								<p class="font-medium {log.changeQty > 0 ? 'text-green-600' : 'text-red-600'}">
+									{log.changeQty > 0 ? '+' : ''}{log.changeQty}
+								</p>
+								<p class="text-xs text-rose-400">
+									{log.stockLevel} {log.unit}
+								</p>
+							</div>
 						</div>
 					</div>
-				</div>
-			{/each}
+				{/each}
+			</div>
+			<div class="flex justify-center gap-2">
+				<button
+					class="px-3 py-1 rounded bg-rose-100 text-rose-600 disabled:opacity-50"
+					disabled={inventoryPage <= 1}
+					onclick={() => { inventoryPage--; fetchInventory(); }}
+				>
+					&lt;
+				</button>
+				<span class="px-3 py-1">{inventoryPage} / {inventoryTotalPages}</span>
+				<button
+					class="px-3 py-1 rounded bg-rose-100 text-rose-600 disabled:opacity-50"
+					disabled={inventoryPage >= inventoryTotalPages}
+					onclick={() => { inventoryPage++; fetchInventory(); }}
+				>
+					&gt;
+				</button>
+			</div>
 		</div>
 	{:else}
 		<div class="text-center py-12 text-rose-300">Tidak ada data</div>
@@ -347,11 +405,7 @@
 				<div class="text-center border-b border-rose-100 pb-4">
 					<h3 class="font-bold text-lg">Bloomy Craft</h3>
 					<p class="text-xs text-rose-500">Laporan Rugi Laba</p>
-					{#if fromDate || toDate}
-						<p class="text-xs text-rose-400 mt-1">
-							{fromDate || '-'} s/d {toDate || '-'}
-						</p>
-					{/if}
+					<p class="text-xs text-rose-400 mt-1 uppercase">{summaryPeriod}</p>
 				</div>
 
 				{#if summary}

@@ -9,39 +9,70 @@ const audit = new Hono<{ Bindings: Bindings }>();
 
 audit.get('/inventory', verifyAuth, async (c) => {
   const db = getDb(c.env.DB);
-  const limit = parseInt(c.req.query('limit') || '100');
-  const fromDate = c.req.query('from');
-  const toDate = c.req.query('to');
+  const page = parseInt(c.req.query('page') || '1');
+  const limit = parseInt(c.req.query('limit') || '20');
+  const q = c.req.query('q') || '';
+  const offset = (page - 1) * limit;
 
-  let query = db
-    .select()
-    .from(schema.inventoryLog)
-    .leftJoin(schema.inventory, eq(schema.inventoryLog.inventoryId, schema.inventory.id))
-    .orderBy(desc(schema.inventoryLog.createdAt))
-    .limit(limit);
+  try {
+    const allLogs = await db
+      .select({ id: schema.inventoryLog.id })
+      .from(schema.inventoryLog);
 
-  const logs = await query;
+    const totalCount = allLogs.length;
 
-  const mapped = logs.map((l: any) => ({
-    id: l.inventory_log.id,
-    inventoryId: l.inventory_log.inventoryId,
-    name: l.inventory?.name || 'Unknown',
-    unit: l.inventory?.unit || '',
-    stockLevel: l.inventory?.stockLevel || 0,
-    changeQty: l.inventory_log.changeQty,
-    reason: l.inventory_log.reason,
-    orderId: l.inventory_log.orderId,
-    createdAt: l.inventory_log.createdAt,
-  }));
+    const logs = await db
+      .select()
+      .from(schema.inventoryLog)
+      .leftJoin(schema.inventory, eq(schema.inventoryLog.inventoryId, schema.inventory.id))
+      .orderBy(desc(schema.inventoryLog.createdAt))
+      .limit(limit)
+      .offset(offset);
 
-  return c.json(mapped);
+    const mapped = logs.map((l: any) => ({
+      id: l.inventory_log.id,
+      inventoryId: l.inventory_log.inventoryId,
+      name: l.inventory?.name || 'Unknown',
+      unit: l.inventory?.unit || '',
+      stockLevel: l.inventory?.stockLevel || 0,
+      changeQty: l.inventory_log.changeQty,
+      reason: l.inventory_log.reason,
+      orderId: l.inventory_log.orderId,
+      createdAt: l.inventory_log.createdAt,
+    }));
+
+    return c.json({
+      data: mapped,
+      page,
+      limit,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+    });
+  } catch (e) {
+    console.error('Audit inventory error:', e);
+    return c.json({ error: String(e) }, 500);
+  }
 });
 
 audit.get('/orders', verifyAuth, async (c) => {
   const db = getDb(c.env.DB);
-  const limit = parseInt(c.req.query('limit') || '100');
+  const page = parseInt(c.req.query('page') || '1');
+  const limit = parseInt(c.req.query('limit') || '20');
+  const q = c.req.query('q') || '';
+  const offset = (page - 1) * limit;
 
   try {
+    const where = q 
+      ? and(eq(schema.orders.paymentStatus, 'Paid'))
+      : eq(schema.orders.paymentStatus, 'Paid');
+
+    const allOrders = await db
+      .select({ id: schema.orders.id })
+      .from(schema.orders)
+      .where(where);
+
+    const totalCount = allOrders.length;
+
     const orders = await db
       .select({
         id: schema.orders.id,
@@ -54,9 +85,10 @@ audit.get('/orders', verifyAuth, async (c) => {
         createdAt: schema.orders.createdAt,
       })
       .from(schema.orders)
-      .where(eq(schema.orders.paymentStatus, 'Paid'))
+      .where(where)
       .orderBy(desc(schema.orders.createdAt))
-      .limit(limit);
+      .limit(limit)
+      .offset(offset);
 
     const ordersWithItems = orders.map((o: any) => ({
       id: o.id,
@@ -70,7 +102,13 @@ audit.get('/orders', verifyAuth, async (c) => {
       profit: o.totalHppSnapshot ? Number(o.totalAmount) - Number(o.totalHppSnapshot) : null,
     }));
 
-    return c.json(ordersWithItems);
+    return c.json({
+      data: ordersWithItems,
+      page,
+      limit,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+    });
   } catch (e) {
     console.error('Audit orders error:', e);
     return c.json({ error: String(e) }, 500);
@@ -131,8 +169,25 @@ audit.get('/order/:id', verifyAuth, async (c) => {
 
 audit.get('/summary', verifyAuth, async (c) => {
   const db = getDb(c.env.DB);
-  const fromDate = c.req.query('from');
-  const toDate = c.req.query('to');
+  const period = c.req.query('period') || 'today';
+
+  const now = new Date();
+  let fromDate: Date | null = null;
+  let toDate: Date = now;
+
+  if (period === 'today') {
+    fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  } else if (period === 'this_week') {
+    const dayOfWeek = now.getDay();
+    fromDate = new Date(now);
+    fromDate.setDate(now.getDate() - dayOfWeek);
+  } else if (period === 'this_month') {
+    fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if (period === 'last_month') {
+    fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    toDate = new Date(now.getFullYear(), now.getMonth(), 0);
+  }
+  // 'all' - no date filter
 
   try {
     let query = db
@@ -148,12 +203,10 @@ audit.get('/summary', verifyAuth, async (c) => {
     const allOrders = await query;
 
     let filteredOrders = allOrders;
-    if (fromDate || toDate) {
+    if (fromDate) {
       filteredOrders = allOrders.filter((o: any) => {
         const orderDate = new Date(o.createdAt);
-        if (fromDate && orderDate < new Date(fromDate)) return false;
-        if (toDate && orderDate > new Date(toDate)) return false;
-        return true;
+        return orderDate >= fromDate! && orderDate <= toDate;
       });
     }
 
@@ -166,8 +219,7 @@ audit.get('/summary', verifyAuth, async (c) => {
       totalRevenue,
       totalHpp,
       totalProfit,
-      fromDate,
-      toDate,
+      period,
     });
   } catch (e) {
     console.error('Audit summary error:', e);
