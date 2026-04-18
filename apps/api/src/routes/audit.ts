@@ -157,7 +157,7 @@ audit.get('/order/:id', verifyAuth, async (c) => {
         totalPrice: schema.orderItems.totalPrice,
       })
       .from(schema.orderItems)
-      .where(eq(schema.orderItems.orderId, id)));
+      .where(eq(schema.orderItems.orderId, id));
 
     const formattedItems = items.map((i: any) => ({
       id: i.id,
