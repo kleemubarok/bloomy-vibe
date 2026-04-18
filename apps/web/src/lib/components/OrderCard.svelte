@@ -16,8 +16,7 @@
 
 	const nextAction = $derived(getNextStatus(order.status));
 	const statusColor = $derived(getStatusColor(order.status));
-	const isPendingPayment = $derived(order.paymentStatus === 'Pending');
-	const showPayButton = $derived(order.paymentStatus === 'Pending');
+	const showPayButton = $derived(order.status === 'Selesai' && order.paymentStatus === 'Pending');
 
 	function goToPendingPayment() {
 		if (browser) {
