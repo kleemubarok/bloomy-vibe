@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { getNextStatus, getStatusColor, type Order } from '$lib/api/client';
-	import { Clock, User, Package, ChevronDown, ChevronUp, Loader2 } from 'lucide-svelte';
+	import { Clock, User, Package, ChevronDown, ChevronUp, Loader2, CreditCard } from 'lucide-svelte';
+	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
 
 	interface Props {
 		order: Order;
@@ -14,6 +16,14 @@
 
 	const nextAction = $derived(getNextStatus(order.status));
 	const statusColor = $derived(getStatusColor(order.status));
+	const isPendingPayment = $derived(order.paymentStatus === 'Pending');
+	const canSerahTerima = $derived(order.status === 'Selesai' && order.paymentStatus === 'Paid');
+
+	function goToPendingPayment() {
+		if (browser) {
+			goto('/pos/pending');
+		}
+	}
 
 	async function handleStatusUpdate() {
 		if (!nextAction || !onStatusChange) return;
@@ -124,7 +134,18 @@
 		</div>
 	{/if}
 
-	{#if nextAction}
+	{#if isPendingPayment}
+		<div class="px-4 pb-4">
+			<button
+				class="w-full py-2 px-4 rounded-xl font-medium text-sm transition-all bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-2"
+				onclick={goToPendingPayment}
+				type="button"
+			>
+				<CreditCard size={16} />
+				Bayar
+			</button>
+		</div>
+	{:else if nextAction}
 		<div class="px-4 pb-4">
 			<button
 				class="w-full py-2 px-4 rounded-xl font-medium text-sm transition-all
@@ -132,9 +153,10 @@
 					? 'bg-blue-500 hover:bg-blue-600 text-white'
 					: order.status === 'Dirangkai'
 						? 'bg-green-500 hover:bg-green-600 text-white'
-						: 'bg-rose-500 hover:bg-rose-600 text-white'}"
+						: 'bg-rose-500 hover:bg-rose-600 text-white'}
+					{!canSerahTerima ? 'opacity-50 cursor-not-allowed' : ''}"
 				onclick={handleStatusUpdate}
-				disabled={isUpdating}
+				disabled={isUpdating || !canSerahTerima}
 				type="button"
 			>
 				{#if isUpdating}
@@ -146,6 +168,9 @@
 					{nextAction.label}
 				{/if}
 			</button>
+			{#if !canSerahTerima && order.status === 'Selesai'}
+				<p class="text-xs text-rose-400 text-center mt-1">Belum lunas</p>
+			{/if}
 		</div>
 	{/if}
 </div>
