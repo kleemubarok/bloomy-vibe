@@ -66,18 +66,18 @@ export const orders = sqliteTable('orders', {
   status: text('status', { enum: ['Draft', 'Antri', 'Dirangkai', 'Selesai', 'Diambil', 'Dikirim', 'Batal'] }).notNull().default('Antri'),
   paymentStatus: text('payment_status', { enum: ['Pending', 'Paid', 'Partial', 'Refunded'] }).notNull().default('Pending'),
   orderType: text('order_type', { enum: ['POS', 'Self-Order'] }).notNull().default('POS'),
-  
+
   // Self-order & specific details
   deliveryDate: integer('delivery_date', { mode: 'timestamp' }),
   messageCard: text('message_card'),
   senderName: text('sender_name'),
-  
+
   // Snapshots for financial reporting (Issue #7 requirements)
   totalHppSnapshot: integer('total_hpp_snapshot'), // Total cost of goods at time of order
   priceLockedAt: integer('price_locked_at', { mode: 'timestamp' }),
-  
+
   isSynced: integer('is_synced', { mode: 'boolean' }).notNull().default(false),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
 }, (table) => ({
   whatsappIdx: index('orders_whatsapp_idx').on(table.customerWhatsapp),
