@@ -17,6 +17,7 @@
 	const nextAction = $derived(getNextStatus(order.status));
 	const statusColor = $derived(getStatusColor(order.status));
 	const showPayButton = $derived(order.status === 'Selesai' && order.paymentStatus === 'Pending');
+	const isUnpaid = $derived(order.paymentStatus === 'Pending');
 
 	function goToPendingPayment() {
 		if (browser) {
@@ -166,6 +167,12 @@
 					{nextAction.label}
 				{/if}
 			</button>
+		</div>
+	{/if}
+
+	{#if isUnpaid}
+		<div class="px-4 pb-2">
+			<p class="text-xs text-amber-600 text-center">Belum lunas</p>
 		</div>
 	{/if}
 </div>
