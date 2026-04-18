@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { posStore } from '$lib/stores/pos.svelte';
 	import type { PaymentMethod } from '$lib/api/client';
-	import { Minus, Plus, Trash2, ShoppingCart, AlertCircle } from 'lucide-svelte';
+	import { Minus, Plus, Trash2, ShoppingCart, AlertCircle, X } from 'lucide-svelte';
 
-	let { 
-		onHold, 
-		onPay 
-	}: { 
+	let {
+		onHold,
+		onPay
+	}: {
 		onHold: () => Promise<void>;
 		onPay: (method: PaymentMethod, amountPaid: number) => Promise<void>;
 	} = $props();
@@ -123,7 +123,9 @@
 
 	<div class="p-4 border-t border-rose-100 space-y-3">
 		<div class="space-y-2">
-			<label for="customerName" class="block text-xs font-medium text-rose-700">Nama Pelanggan *</label>
+			<label for="customerName" class="block text-xs font-medium text-rose-700"
+				>Nama Pelanggan *</label
+			>
 			<input
 				type="text"
 				id="customerName"
@@ -134,7 +136,9 @@
 			/>
 		</div>
 		<div class="space-y-2">
-			<label for="customerWhatsapp" class="block text-xs font-medium text-rose-700">No. WhatsApp</label>
+			<label for="customerWhatsapp" class="block text-xs font-medium text-rose-700"
+				>No. WhatsApp</label
+			>
 			<input
 				type="tel"
 				id="customerWhatsapp"
@@ -179,9 +183,16 @@
 
 {#if showPaymentModal}
 	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-		<div class="bg-white rounded-3xl p-6 max-w-sm w-full">
-			<h3 class="text-lg font-semibold text-rose-900 mb-4">Pembayaran</h3>
-			
+		<div class="bg-white rounded-3xl p-6 max-w-sm w-full relative">
+			<button
+				class="absolute top-4 right-4 p-2 hover:bg-rose-100 rounded-full transition-colors"
+				onclick={closePaymentModal}
+				type="button"
+			>
+				<X size={20} class="text-rose-400" />
+			</button>
+			<h3 class="text-lg font-semibold text-rose-900 mb-4 pr-8">Pembayaran</h3>
+
 			<div class="space-y-4">
 				<div>
 					<label class="block text-sm font-medium text-rose-700 mb-2">Metode Bayar</label>
@@ -189,11 +200,11 @@
 						{#each paymentMethods as method}
 							<button
 								type="button"
-								onclick={() => paymentMethod = method.value}
+								onclick={() => (paymentMethod = method.value)}
 								class="py-2 px-3 text-sm font-medium rounded-xl border transition-all
-									{paymentMethod === method.value 
-										? 'bg-rose-500 text-white border-rose-500' 
-										: 'bg-white text-rose-600 border-rose-200 hover:border-rose-300'}"
+									{paymentMethod === method.value
+									? 'bg-rose-500 text-white border-rose-500'
+									: 'bg-white text-rose-600 border-rose-200 hover:border-rose-300'}"
 							>
 								{method.label}
 							</button>
@@ -203,7 +214,9 @@
 
 				{#if paymentMethod === 'Cash'}
 					<div>
-						<label for="amountPaid" class="block text-sm font-medium text-rose-700 mb-2">Jumlah Bayar</label>
+						<label for="amountPaid" class="block text-sm font-medium text-rose-700 mb-2"
+							>Jumlah Bayar</label
+						>
 						<input
 							type="number"
 							id="amountPaid"
@@ -247,7 +260,8 @@
 				<button
 					type="button"
 					onclick={handlePay}
-					disabled={posStore.isProcessing || (paymentMethod === 'Cash' && amountPaid < posStore.getTotal())}
+					disabled={posStore.isProcessing ||
+						(paymentMethod === 'Cash' && amountPaid < posStore.getTotal())}
 					class="flex-1 py-2.5 px-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-sm font-semibold rounded-xl hover:from-rose-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
 				>
 					{#if posStore.isProcessing}

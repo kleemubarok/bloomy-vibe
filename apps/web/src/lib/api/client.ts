@@ -310,8 +310,8 @@ export async function validateSelfOrderLink(uuid: string): Promise<SelfOrderVali
 			return { valid: false, reason: 'not_found' };
 		}
 		if (res.status === 403) {
-			const data = await res.json();
-			return { valid: false, reason: data.reason || 'expired' };
+			const data = await res.json() as { reason?: string };
+			return { valid: false, reason: (data.reason || 'expired') as 'expired' | 'used' | 'not_found' };
 		}
 		throw new Error('Failed to validate link');
 	}
