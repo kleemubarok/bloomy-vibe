@@ -1,6 +1,6 @@
-import type { Order, OrderItem, Product, CartItem } from './types';
+import type { Order, OrderItem, CartItem } from './types';
 
-export type { Order, OrderItem, Product, CartItem };
+export type { Order, OrderItem, CartItem };
 
 const API_BASE = '/api';
 
@@ -374,4 +374,168 @@ export async function deleteSelfOrderLink(id: string): Promise<void> {
 	if (!res.ok) {
 		throw new Error('Failed to delete link');
 	}
+}
+
+export interface InventoryItem {
+	id: number;
+	name: string;
+	sku: string | null;
+	unit: string;
+	stockLevel: number;
+	reorderLevel: number;
+	isDeleted: boolean;
+	createdAt: Date | string;
+	updatedAt: Date | string;
+}
+
+export interface ProductRecipe {
+	id: number;
+	productId: number;
+	inventoryId: number;
+	quantityRequired: number;
+	inventoryName?: string;
+}
+
+export interface Product {
+	id: number;
+	name: string;
+	slug: string;
+	category: 'flower' | 'craft' | 'service';
+	basePrice: number;
+	imageUrl: string | null;
+	isActive: boolean;
+	isDeleted: boolean;
+	createdAt: Date | string;
+	updatedAt: Date | string;
+	recipes: ProductRecipe[];
+}
+
+export type CreateProductData = Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted' | 'recipes'> & {
+	recipes: { inventoryId: number; quantityRequired: number }[];
+};
+
+export async function getInventory(): Promise<InventoryItem[]> {
+	const res = await fetchWithAuth('/inventory');
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to fetch inventory' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to fetch inventory');
+	}
+
+	return res.json();
+}
+
+export async function createInventory(data: {
+	name: string;
+	sku?: string;
+	unit: string;
+	stockLevel?: number;
+	reorderLevel?: number;
+}): Promise<InventoryItem> {
+	const res = await fetchWithAuth('/inventory', {
+		method: 'POST',
+		body: JSON.stringify(data)
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to create inventory' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to create inventory');
+	}
+
+	return res.json();
+}
+
+export async function updateInventory(id: string, data: Partial<InventoryItem>): Promise<InventoryItem> {
+	const res = await fetchWithAuth(`/inventory/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(data)
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to update inventory' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to update inventory');
+	}
+
+	return res.json();
+}
+
+export async function deleteInventory(id: string): Promise<{ message: string }> {
+	const res = await fetchWithAuth(`/inventory/${id}`, {
+		method: 'DELETE'
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to delete inventory' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to delete inventory');
+	}
+
+	return res.json();
+}
+
+export async function getProductsList(): Promise<Product[]> {
+	const res = await fetchWithAuth('/products');
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to fetch products' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to fetch products');
+	}
+
+	return res.json();
+}
+
+export async function createProduct(data: CreateProductData): Promise<Product> {
+	const res = await fetchWithAuth('/products', {
+		method: 'POST',
+		body: JSON.stringify(data)
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to create product' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to create product');
+	}
+
+	return res.json();
+}
+
+export async function updateProduct(id: string, data: Partial<CreateProductData>): Promise<Product> {
+	const res = await fetchWithAuth(`/products/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(data)
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to update product' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to update product');
+	}
+
+	return res.json();
+}
+
+export async function deleteProduct(id: string): Promise<{ message: string }> {
+	const res = await fetchWithAuth(`/products/${id}`, {
+		method: 'DELETE'
+	});
+
+	if (!res.ok) {
+		const errorData = (await res.json().catch(() => ({ message: 'Failed to delete product' }))) as {
+			message?: string;
+		};
+		throw new Error(errorData.message || 'Failed to delete product');
+	}
+
+	return res.json();
 }

@@ -1,4 +1,5 @@
-import type { CartItem, Product } from '$lib/api/types';
+import type { CartItem } from '$lib/api/types';
+import type { Product } from '$lib/api/client';
 
 export interface PosState {
 	items: CartItem[];
