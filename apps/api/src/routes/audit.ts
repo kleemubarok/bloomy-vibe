@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, inArray } from 'drizzle-orm';
 import type { Bindings } from '../db/client';
 import { getDb } from '../db/client';
 import { verifyAuth } from '../middleware/guard';
@@ -142,20 +142,30 @@ audit.get('/order/:id', verifyAuth, async (c) => {
     }
 
     const order = orderResult[0];
-    const itemsResult = await db
+    
+    // Get items with product data
+    const rawItems = await db
       .select()
       .from(schema.orderItems)
-      .innerJoin(schema.products, eq(schema.orderItems.productId, schema.products.id))
       .where(eq(schema.orderItems.orderId, id));
 
-    const formattedItems = (itemsResult || []).map((i: any) => {
-      const rawQty = i.order_items?.quantity;
-      const rawPrice = i.order_items?.unit_price_at_order;
-      const qty = (typeof rawQty === 'number') ? rawQty : (parseInt(rawQty) || 1);
-      const price = (typeof rawPrice === 'number') ? rawPrice : (parseInt(rawPrice) || 0);
+    // Get product names
+    const productIds = rawItems.map((i: any) => i.productId).filter(Boolean);
+    let productMap: any = {};
+    if (productIds.length > 0) {
+      const products = await db
+        .select({ id: schema.products.id, name: schema.products.name })
+        .from(schema.products)
+        .where(inArray(schema.products.id, productIds));
+      productMap = Object.fromEntries(products.map((p: any) => [p.id, p.name]));
+    }
+
+    const formattedItems = rawItems.map((i: any) => {
+      const qty = Number(i.quantity) || 1;
+      const price = Number(i.unitPriceAtOrder) || 0;
       return {
-        id: i.order_items?.id,
-        productName: i.products?.name || 'Product #' + (i.order_items?.productId || 0),
+        id: i.id,
+        productName: productMap[i.productId] || 'Product #' + (i.productId || 0),
         quantity: qty,
         unitPrice: price,
         totalPrice: qty * price,
