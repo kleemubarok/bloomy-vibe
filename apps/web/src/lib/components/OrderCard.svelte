@@ -16,7 +16,7 @@
 
 	const nextAction = $derived(getNextStatus(order.status));
 	const statusColor = $derived(getStatusColor(order.status));
-	const isPendingPayment = $derived(order.paymentStatus === 'Pending');
+	const isPendingPayment = $derived(order.status === 'Selesai' && order.paymentStatus === 'Pending');
 	const canSerahTerima = $derived(order.status === 'Selesai' && order.paymentStatus === 'Paid');
 
 	function goToPendingPayment() {
