@@ -108,9 +108,11 @@
 		}).format(amount);
 	}
 
-	function formatDate(date: string | null): string {
+	function formatDate(date: string | number | null): string {
 		if (!date) return '-';
-		return new Date(date).toLocaleDateString('id-ID', {
+		const d = typeof date === 'number' ? new Date(date) : new Date(date);
+		if (isNaN(d.getTime())) return String(date);
+		return d.toLocaleDateString('id-ID', {
 			day: 'numeric',
 			month: 'short',
 			year: 'numeric',
@@ -170,6 +172,7 @@
 				class="px-3 py-2 rounded-lg border border-rose-200 text-sm bg-white"
 			>
 				<option value="today">Today</option>
+				<option value="yesterday">Yesterday</option>
 				<option value="this_week">This Week</option>
 				<option value="this_month">This Month</option>
 				<option value="last_month">Last Month</option>

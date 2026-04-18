@@ -177,6 +177,11 @@ audit.get('/summary', verifyAuth, async (c) => {
 
   if (period === 'today') {
     fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  } else if (period === 'yesterday') {
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    fromDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+    toDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
   } else if (period === 'this_week') {
     const dayOfWeek = now.getDay();
     fromDate = new Date(now);
