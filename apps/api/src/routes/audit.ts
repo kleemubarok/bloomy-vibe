@@ -148,19 +148,29 @@ audit.get('/order/:id', verifyAuth, async (c) => {
       .innerJoin(schema.products, eq(schema.orderItems.productId, schema.products.id))
       .where(eq(schema.orderItems.orderId, id));
 
-    const formattedItems = (itemsResult || []).map((i: any) => ({
-      id: i.order_items.id,
-      productName: i.products?.name || 'Product #' + i.order_items.productId,
-      quantity: i.order_items.quantity,
-      unitPrice: i.order_items.unit_price_at_order,
-      totalPrice: i.order_items.quantity * i.order_items.unit_price_at_order,
-    }));
+    const formattedItems = (itemsResult || []).map((i: any) => {
+      const qty = i.order_items?.quantity || 1;
+      const price = i.order_items?.unit_price_at_order || 0;
+      return {
+        id: i.order_items?.id,
+        productName: i.products?.name || 'Product #' + (i.order_items?.productId || 0),
+        quantity: qty,
+        unitPrice: price,
+        totalPrice: qty * price,
+      };
+    });
 
     const rawHpp = order.totalHppSnapshot;
     const rawTotal = order.totalAmount;
     const hpp = rawHpp ? Number(rawHpp) : 0;
     const total = rawTotal ? Number(rawTotal) : 0;
     const profit = total - hpp;
+
+    // Format createdAt
+    let createdAtStr = order.createdAt;
+    if (order.createdAt && typeof order.createdAt === 'number') {
+      createdAtStr = String(order.createdAt);
+    }
 
     return c.json({
       id: order.id,
@@ -170,7 +180,7 @@ audit.get('/order/:id', verifyAuth, async (c) => {
       totalHppSnapshot: hpp,
       paymentStatus: order.paymentStatus || 'Pending',
       status: order.status || 'Unknown',
-      createdAt: order.createdAt,
+      createdAt: createdAtStr,
       items: formattedItems,
       profit: profit,
     });
