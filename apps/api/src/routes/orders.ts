@@ -258,8 +258,24 @@ orders.post('/:id/checkout', verifyAuth, async (c) => {
     throw new HTTPException(404, { message: 'Order not found' });
   }
 
-  if (order.status !== 'Antri') {
-    throw new HTTPException(400, { message: 'Can only checkout orders in Antri status' });
+  if (order.status !== 'Antri' && order.status !== 'Hold') {
+    throw new HTTPException(400, { message: 'Can only checkout orders in Antri or Hold status' });
+  }
+
+  if (order.paymentStatus === 'Paid' && order.status === 'Hold') {
+    const [existingSync] = await db
+      .select()
+      .from(schema.syncQueue)
+      .where(eq(schema.syncQueue.entityId, id))
+      .limit(1);
+    if (existingSync && existingSync.status === 'Synced') {
+      const [existingOrder] = await db
+        .select()
+        .from(schema.orders)
+        .where(eq(schema.orders.id, id))
+        .limit(1);
+      return c.json({ message: 'Already processed', order: existingOrder }, 200);
+    }
   }
 
   const items = await db

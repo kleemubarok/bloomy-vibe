@@ -86,7 +86,7 @@
 				reference: undefined
 			});
 
-			if (paymentResult.paymentStatus === 'Paid') {
+			if (paymentResult.paymentStatus === 'Paid' && selectedOrder.status !== 'Selesai') {
 				await checkoutOrder(selectedOrder.id);
 			}
 
