@@ -3,6 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { fetchWithAuth } from '$lib/api/client';
 	import { Printer, TrendingUp, Package, DollarSign, X, ChevronRight } from 'lucide-svelte';
+	import { triggerPrint, formatCurrency } from '$lib/print/utils';
+	import Receipt from '$lib/components/Receipt.svelte';
 
 	let activeTab = $state<'summary' | 'orders' | 'inventory'>('summary');
 	let isLoading = $state(true);
@@ -25,6 +27,7 @@
 	let showOrderDetail = $state(false);
 	let selectedInventoryLog = $state<any>(null);
 	let showInventoryLogDetail = $state(false);
+	let showReceiptPrint = $state(false);
 
 	onMount(async () => {
 		await fetchSummary();
@@ -116,6 +119,16 @@
 		} finally {
 			isLoading = false;
 		}
+	}
+
+	function handlePrintReceipt() {
+		if (selectedOrder) {
+			showReceiptPrint = true;
+		}
+	}
+
+	function doPrint() {
+		triggerPrint();
 	}
 
 	function formatCurrency(amount: number): string {
@@ -395,7 +408,7 @@
 
 			<button
 				class="w-full mt-4 py-2 bg-rose-500 text-white rounded-xl font-medium"
-				onclick={() => (showPrintPreview = true)}
+				onclick={handlePrintReceipt}
 			>
 				Cetak Struk
 			</button>
@@ -471,6 +484,23 @@
 					<button class="w-full mt-4 py-2 bg-rose-500 text-white rounded-xl font-medium" onclick={() => { showInventoryLogDetail = false; openOrderDetail(selectedInventoryLog.order); }}>Lihat Detail Order</button>
 				</div>
 			{/if}
+		</div>
+	</div>
+{/if}
+
+{#if showReceiptPrint && selectedOrder}
+	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onclick={() => (showReceiptPrint = false)}>
+		<div class="bg-white rounded-2xl p-4 max-w-sm w-full max-h-[80vh] overflow-y-auto" onclick={(e) => e.stopPropagation()}>
+			<div class="flex justify-between items-center mb-4">
+				<h2 class="font-bold text-rose-900">Print Struk</h2>
+				<button class="text-rose-400" onclick={() => (showReceiptPrint = false)}><X size={20} /></button>
+			</div>
+			<div class="print-paper">
+				<Receipt order={selectedOrder} paymentMethod="Cash" amountPaid={selectedOrder.totalAmount} change={0} />
+			</div>
+			<button class="w-full mt-4 py-2 bg-rose-500 text-white rounded-xl font-medium" onclick={doPrint}>
+				Cetak Sekarang
+			</button>
 		</div>
 	</div>
 {/if}

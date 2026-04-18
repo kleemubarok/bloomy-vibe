@@ -145,14 +145,15 @@ audit.get('/order/:id', verifyAuth, async (c) => {
     const itemsResult = await db
       .select()
       .from(schema.orderItems)
+      .innerJoin(schema.products, eq(schema.orderItems.productId, schema.products.id))
       .where(eq(schema.orderItems.orderId, id));
 
     const formattedItems = (itemsResult || []).map((i: any) => ({
-      id: i.id,
-      productName: i.productName || 'Unknown',
-      quantity: i.quantity,
-      unitPrice: i.unitPrice,
-      totalPrice: i.totalPrice,
+      id: i.order_items.id,
+      productName: i.products?.name || 'Product #' + i.order_items.productId,
+      quantity: i.order_items.quantity,
+      unitPrice: i.order_items.unit_price_at_order,
+      totalPrice: i.order_items.quantity * i.order_items.unit_price_at_order,
     }));
 
     const rawHpp = order.totalHppSnapshot;
