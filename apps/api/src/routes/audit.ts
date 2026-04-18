@@ -131,37 +131,23 @@ audit.get('/order/:id', verifyAuth, async (c) => {
   console.log('Order detail request for:', id);
 
   try {
-    const [order] = await db
-      .select({
-        id: schema.orders.id,
-        customerName: schema.orders.customerName,
-        customerWhatsapp: schema.orders.customerWhatsapp,
-        totalAmount: schema.orders.totalAmount,
-        totalHppSnapshot: schema.orders.totalHppSnapshot,
-        paymentStatus: schema.orders.paymentStatus,
-        status: schema.orders.status,
-        createdAt: schema.orders.createdAt,
-      })
+    const orderResult = await db
+      .select()
       .from(schema.orders)
       .where(eq(schema.orders.id, id))
       .limit(1);
 
-    if (!order) {
+    if (!orderResult || orderResult.length === 0) {
       return c.json({ error: 'Order not found' }, 404);
     }
 
-    const items = await db
-      .select({
-        id: schema.orderItems.id,
-        productName: schema.orderItems.productName,
-        quantity: schema.orderItems.quantity,
-        unitPrice: schema.orderItems.unitPrice,
-        totalPrice: schema.orderItems.totalPrice,
-      })
+    const order = orderResult[0];
+    const itemsResult = await db
+      .select()
       .from(schema.orderItems)
       .where(eq(schema.orderItems.orderId, id));
 
-    const formattedItems = items.map((i: any) => ({
+    const formattedItems = (itemsResult || []).map((i: any) => ({
       id: i.id,
       productName: i.productName || 'Unknown',
       quantity: i.quantity,
@@ -169,21 +155,21 @@ audit.get('/order/:id', verifyAuth, async (c) => {
       totalPrice: i.totalPrice,
     }));
 
-    const rawHpp = order && order.totalHppSnapshot;
-    const rawTotal = order && order.totalAmount;
+    const rawHpp = order.totalHppSnapshot;
+    const rawTotal = order.totalAmount;
     const hpp = rawHpp ? Number(rawHpp) : 0;
     const total = rawTotal ? Number(rawTotal) : 0;
     const profit = total - hpp;
 
     return c.json({
-      id: order && order.id,
-      customerName: (order && order.customerName) || '-',
-      customerWhatsapp: (order && order.customerWhatsapp) || '',
+      id: order.id,
+      customerName: order.customerName || '-',
+      customerWhatsapp: order.customerWhatsapp || '',
       totalAmount: total,
       totalHppSnapshot: hpp,
-      paymentStatus: (order && order.paymentStatus) || 'Pending',
-      status: (order && order.status) || 'Unknown',
-      createdAt: order && order.createdAt,
+      paymentStatus: order.paymentStatus || 'Pending',
+      status: order.status || 'Unknown',
+      createdAt: order.createdAt,
       items: formattedItems,
       profit: profit,
     });
