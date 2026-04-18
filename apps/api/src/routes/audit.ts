@@ -159,15 +159,24 @@ audit.get('/order/:id', verifyAuth, async (c) => {
       .from(schema.orderItems)
       .where(eq(schema.orderItems.orderId, id)));
 
+    const formattedItems = items.map((i: any) => ({
+      id: i.id,
+      productName: i.productName || 'Unknown',
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      totalPrice: i.totalPrice,
+    }));
+
     return c.json({
-      ...order,
-      items: items.map((i: any) => ({
-        id: i.id,
-        productName: i.productName,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
-        totalPrice: i.totalPrice,
-      })),
+      id: order.id,
+      customerName: order.customerName || '-',
+      customerWhatsapp: order.customerWhatsapp || null,
+      totalAmount: order.totalAmount,
+      totalHppSnapshot: order.totalHppSnapshot,
+      paymentStatus: order.paymentStatus,
+      status: order.status,
+      createdAt: order.createdAt,
+      items: formattedItems,
       profit: order.totalHppSnapshot ? Number(order.totalAmount) - Number(order.totalHppSnapshot) : null,
     });
   } catch (e) {
