@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { swaggerUI } from '@hono/swagger-ui';
 import auth from './routes/auth';
+import audit from './routes/audit';
 import inventory from './routes/inventory';
 import products from './routes/products';
 import orders from './routes/orders';
@@ -377,6 +378,9 @@ app.route('/api/self-order', selfOrder);
 
 // Sync Routes
 app.route('/api/sync', sync);
+
+// Audit Routes
+app.route('/api/audit', audit);
 
 // Protected Test Routes
 app.get('/api/test/staff', verifyAuth, requireRole(['staff']), (c) => {
