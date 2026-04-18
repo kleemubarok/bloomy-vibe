@@ -128,6 +128,7 @@ audit.get('/orders', verifyAuth, async (c) => {
 audit.get('/order/:id', verifyAuth, async (c) => {
   const db = getDb(c.env.DB);
   const id = c.req.param('id');
+  console.log('Order detail request for:', id);
 
   try {
     const [order] = await db
@@ -168,22 +169,23 @@ audit.get('/order/:id', verifyAuth, async (c) => {
       totalPrice: i.totalPrice,
     }));
 
-    const hpp = order.totalHppSnapshot ? Number(order.totalHppSnapshot) : 0;
-    const total = order.totalAmount ? Number(order.totalAmount) : 0;
+    const rawHpp = order && order.totalHppSnapshot;
+    const rawTotal = order && order.totalAmount;
+    const hpp = rawHpp ? Number(rawHpp) : 0;
+    const total = rawTotal ? Number(rawTotal) : 0;
     const profit = total - hpp;
 
     return c.json({
-      id: order.id,
-      customerName: order.customerName || '-',
-      customerWhatsapp: order.customerWhatsapp || '',
+      id: order && order.id,
+      customerName: (order && order.customerName) || '-',
+      customerWhatsapp: (order && order.customerWhatsapp) || '',
       totalAmount: total,
       totalHppSnapshot: hpp,
-      paymentStatus: order.paymentStatus,
-      status: order.status,
-      createdAt: order.createdAt,
+      paymentStatus: (order && order.paymentStatus) || 'Pending',
+      status: (order && order.status) || 'Unknown',
+      createdAt: order && order.createdAt,
       items: formattedItems,
       profit: profit,
-      profit: order.totalHppSnapshot ? Number(order.totalAmount) - Number(order.totalHppSnapshot) : null,
     });
   } catch (e) {
     console.error('Audit order detail error:', e);
