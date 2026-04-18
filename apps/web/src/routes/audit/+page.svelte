@@ -18,7 +18,7 @@
 	async function fetchSummary() {
 		isLoading = true;
 		try {
-			const res = await fetchWithAuth('/api/audit/summary');
+			const res = await fetchWithAuth('/audit/summary');
 			if (res.ok) {
 				summary = await res.json();
 			}
@@ -32,7 +32,7 @@
 	async function fetchOrders() {
 		isLoading = true;
 		try {
-			const res = await fetchWithAuth('/api/audit/orders?limit=100');
+			const res = await fetchWithAuth('/audit/orders?limit=100');
 			if (res.ok) {
 				orders = await res.json();
 			}
@@ -46,7 +46,7 @@
 	async function fetchInventory() {
 		isLoading = true;
 		try {
-			const res = await fetchWithAuth('/api/audit/inventory?limit=100');
+			const res = await fetchWithAuth('/audit/inventory?limit=100');
 			if (res.ok) {
 				inventoryLogs = await res.json();
 			}
