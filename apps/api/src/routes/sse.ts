@@ -1,13 +1,12 @@
 import { Hono } from 'hono';
 import type { Bindings } from '../db/client';
-import { verifyAuth } from '../middleware/guard';
 import { getDb } from '../db/client';
 
 const sse = new Hono<{ Bindings: Bindings }>();
 
 const clients = new Set<ReadableStreamDefaultController<Uint8Array>>();
 
-sse.get('/status', verifyAuth, async (c) => {
+sse.get('/status', async (c) => {
   const db = getDb(c.env.DB);
 
   const stream = new ReadableStream({
