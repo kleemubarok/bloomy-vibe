@@ -37,7 +37,9 @@
 			submittedOrderId = result.orderId;
 			submitted = true;
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Gagal mengirim pesanan';
+			let errMsg = e instanceof Error ? e.message : 'Gagal mengirim pesanan';
+        if (errMsg.includes('Product no longer available')) errMsg = 'Produk tidak tersedia lagi';
+        error = errMsg;
 		} finally {
 			isSubmitting = false;
 		}
@@ -99,20 +101,37 @@
 				<div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
 					<AlertCircle size={32} class="text-red-500" />
 				</div>
-				<h2 class="text-xl font-bold text-rose-900 mb-2">
+<h2 class="text-xl font-bold text-rose-900 mb-2">
 					{#if data.validation.reason === 'expired'}
 						Link Kadaluarsa
 					{:else if data.validation.reason === 'used'}
-						Link Sudah Digunakan
+						Detail Pesanan
 					{:else}
 						Link Tidak Ditemukan
 					{/if}
 				</h2>
-				<p class="text-rose-600">
+{#if data.validation.reason === 'used'}
+        <div class="bg-rose-50 rounded-xl p-4 text-left mb-6">
+          <h3 class="font-semibold text-rose-900 mb-2">Detail Pesanan</h3>
+          <p class="font-medium text-rose-900">{data.validation.product?.name ?? 'Produk'}</p>
+          <p class="text-rose-500">Jumlah: {data.validation.quantity || 1}</p>
+          <p class="font-semibold text-rose-600 mt-2">Total: {formatPrice(total)}</p>
+          {#if data.validation.orderInfo}
+            <p class="text-rose-500 mt-2">Order ID: {data.validation.orderInfo.orderId}</p>
+            <p class="text-rose-500">Status: {data.validation.orderInfo.status}</p>
+            <p class="text-rose-500">Total Amount: {formatPrice(data.validation.orderInfo.totalAmount)}</p>
+          {/if}
+        </div>
+      {/if}
+<p class="text-rose-600">
 					{#if data.validation.reason === 'expired'}
 						Maaf, link ini sudah tidak berlaku. Silakan minta link baru dari pengirim.
-					{:else if data.validation.reason === 'used'}
-						Maaf, link ini sudah digunakan untuk memesan. Setiap link hanya bisa digunakan sekali.
+{:else if data.validation.reason === 'used'}
+						{#if data.validation.orderInfo}
+                        <span class="text-rose-600 font-medium">Status: {data.validation.orderInfo.status}</span>
+                      {:else}
+                        <span class="text-rose-600 font-medium">Status: Sudah Dipesan</span>
+                      {/if}
 					{:else}
 						Maaf, link yang Anda masukkan tidak valid.
 					{/if}
@@ -202,10 +221,10 @@
 
 					<div>
 						<label for="deliveryDate" class="block text-sm font-medium text-rose-700 mb-2">
-							Jadwal Pengiriman
+							Tanggal Pengiriman
 						</label>
 						<input
-							type="datetime-local"
+							type="date"
 							id="deliveryDate"
 							bind:value={deliveryDate}
 							class="w-full px-4 py-3 rounded-xl border border-rose-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"

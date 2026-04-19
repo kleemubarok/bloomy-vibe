@@ -302,17 +302,22 @@ export interface SelfOrderLink {
 }
 
 export interface SelfOrderValidation {
-	valid: boolean;
-	product?: {
-		id: number;
-		name: string;
-		basePrice: number;
-		category: string;
-	};
-	customerName?: string;
-	quantity?: number;
-	expiresAt?: string;
-	reason?: 'expired' | 'used' | 'not_found';
+  valid: boolean;
+  product?: {
+    id: number;
+    name: string;
+    basePrice: number;
+    category: string;
+  };
+  customerName?: string;
+  quantity?: number;
+  expiresAt?: string;
+  reason?: 'expired' | 'used' | 'not_found';
+  orderInfo?: {
+    orderId: string;
+    status: string;
+    totalAmount: number;
+  };
 }
 
 export interface SelfOrderSubmitData {
@@ -343,20 +348,21 @@ export async function generateSelfOrderLink(data: {
 }
 
 export async function validateSelfOrderLink(uuid: string): Promise<SelfOrderValidation> {
-	const res = await fetch(`/api/self-order/${uuid}/validate`);
+  const res = await fetch(`/api/self-order/${uuid}/validate`);
+  const data = await res.json() as SelfOrderValidation;
 
-	if (!res.ok) {
-		if (res.status === 404) {
-			return { valid: false, reason: 'not_found' };
-		}
-		if (res.status === 403) {
-			const data = await res.json() as { reason?: string };
-			return { valid: false, reason: (data.reason || 'expired') as 'expired' | 'used' | 'not_found' };
-		}
-		throw new Error('Failed to validate link');
-	}
+  if (!res.ok) {
+    if (res.status === 404) {
+      return { valid: false, reason: 'not_found' };
+    }
+    // For 403 responses, data includes reason and other fields
+    if (res.status === 403) {
+      return { valid: false, ...data };
+    }
+    throw new Error('Failed to validate link');
+  }
 
-	return res.json();
+  return data;
 }
 
 export async function submitSelfOrder(uuid: string, data: SelfOrderSubmitData): Promise<{

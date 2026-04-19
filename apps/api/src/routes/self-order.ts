@@ -128,32 +128,63 @@ selfOrder.get('/:uuid/validate', async (c) => {
     throw new HTTPException(404, { message: 'Link not found' });
   }
 
-  if (link.isUsed) {
-    return c.json({ valid: false, reason: 'used' }, 403);
-  }
+let reason: string | null = null;
+    if (link.isUsed) {
+      reason = 'used';
+    } else if (new Date(link.expiresAt) < new Date()) {
+      reason = 'expired';
+    }
 
-  if (new Date(link.expiresAt) < new Date()) {
-    return c.json({ valid: false, reason: 'expired' }, 403);
-  }
+    const [product] = await db
+      .select()
+      .from(schema.products)
+      .where(eq(schema.products.id, link.productId))
+      .limit(1);
 
-  const [product] = await db
-    .select()
-    .from(schema.products)
-    .where(eq(schema.products.id, link.productId))
-    .limit(1);
+    if (reason) {
+      // If the link is already used, also include the latest Self‑Order details (orderId, status, totalAmount)
+      let orderInfo: { orderId: string; status: string; totalAmount: number } | null = null;
+      if (reason === 'used') {
+        const orders = await db
+          .select()
+          .from(schema.orders)
+          .where(eq(schema.orders.customerName, link.customerName))
+          .orderBy(schema.orders.createdAt);
+        const latestOrder = orders
+          .filter((o: any) => o.orderType === 'Self-Order')
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+        if (latestOrder) {
+          orderInfo = { orderId: latestOrder.id, status: latestOrder.status, totalAmount: latestOrder.totalAmount };
+        }
+      }
+      return c.json({
+        valid: false,
+        reason,
+        product: product ? {
+          id: product.id,
+          name: product.name,
+          basePrice: product.basePrice,
+          category: product.category,
+        } : null,
+        customerName: link.customerName,
+        quantity: link.quantity,
+        expiresAt: link.expiresAt,
+        orderInfo,
+      }, 403);
+    }
 
-  return c.json({
-    valid: true,
-    product: product ? {
-      id: product.id,
-      name: product.name,
-      basePrice: product.basePrice,
-      category: product.category,
-    } : null,
-    customerName: link.customerName,
-    quantity: link.quantity,
-    expiresAt: link.expiresAt,
-  });
+    return c.json({
+      valid: true,
+      product: product ? {
+        id: product.id,
+        name: product.name,
+        basePrice: product.basePrice,
+        category: product.category,
+      } : null,
+      customerName: link.customerName,
+      quantity: link.quantity,
+      expiresAt: link.expiresAt,
+    });
 });
 
 selfOrder.post('/:uuid', async (c) => {
