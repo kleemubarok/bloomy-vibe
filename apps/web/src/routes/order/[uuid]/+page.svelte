@@ -18,6 +18,11 @@
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 		
+		// konfirmasi sekali sebelum mengirim (tidak dapat diubah lagi)
+		if (!window.confirm('Apakah Anda yakin? Data tidak dapat diubah lagi setelah dikirim.')) {
+			return;
+		}
+
 		isSubmitting = true;
 		error = '';
 
@@ -72,10 +77,10 @@
 				<div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
 					<CheckCircle size={32} class="text-green-500" />
 				</div>
-				<h2 class="text-xl font-bold text-rose-900 mb-2">Pesanan Terkirim!</h2>
-				<p class="text-rose-600 mb-6">
-					Pesanan Anda sedang diproses. Kami akan menghubungi untuk konfirmasi.
-				</p>
+<h2 class="text-xl font-bold text-rose-900 mb-2">Pesanan Berhasil Disimpan</h2>
+			<p class="text-rose-600 mb-6">
+				Pesanan berhasil disimpan dan akan segera diproses. Untuk melihat status pengerjaan dan pembayaran, silakan kunjungi kembali link ini secara berkala.
+			</p>
 				{#if data.validation.product}
 					<div class="bg-rose-50 rounded-xl p-4 text-left mb-6">
 						<p class="text-sm text-rose-500">Detail Pesanan:</p>
@@ -174,7 +179,7 @@
 						<textarea
 							id="messageCard"
 							bind:value={messageCard}
-							placeholder="Contoh: Selamat ulang tahun! Semoga sehat selalu."
+							placeholder="Dari: ...\n\nPesan: ...\n\nAlamat kirim: ..."
 							rows="3"
 							maxlength="500"
 							class="w-full px-4 py-3 rounded-xl border border-rose-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all resize-none"
