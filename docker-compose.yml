@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/api/.wrangler/state:/app/.wrangler/state
+    environment:
+      - PORT=3000
+    # Use host network for SQLite file access if needed
+    # network_mode: host
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    environment:
+      - VITE_API_HOST=http://api:3000
+    # network_mode: host
