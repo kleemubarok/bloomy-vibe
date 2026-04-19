@@ -15,7 +15,7 @@
 	let quantity = $state(1);
 	let customerName = $state('');
 
-	let copied = $state(false);
+	let copiedLink = $state<string | null>(null);
 
 	onMount(async () => {
 		if (!browser) return;
@@ -83,8 +83,8 @@
 		const url = `${window.location.origin}/order/${uuid}`;
 		try {
 			await navigator.clipboard.writeText(url);
-			copied = true;
-			setTimeout(() => { copied = false; }, 2000);
+			copiedLink = uuid;
+			setTimeout(() => { copiedLink = null; }, 2000);
 		} catch (e) {
 			error = 'Gagal copy ke clipboard';
 		}
@@ -290,11 +290,11 @@
 									class="p-2 rounded-lg bg-rose-100 text-rose-600 hover:bg-rose-200 transition-colors"
 									title="Copy Link"
 								>
-									{#if copied}
-										<Check size={18} />
-									{:else}
-										<Copy size={18} />
-									{/if}
+{#if copiedLink === link.uuid}
+								<Check size={18} />
+							{:else}
+								<Copy size={18} />
+							{/if}
 								</button>
 							{/if}
 							
